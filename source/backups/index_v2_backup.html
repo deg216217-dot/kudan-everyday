@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>まいにち九段チャレンジ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Reddit+Sans:wght@400;600;800&display=swap');
+  :root{
+    --grass:#1f8f4e;--grass-dark:#176b3b;--grass-line:#2aa55e;
+    --sky:#0e1a2b;--sky2:#16263d;--gold:#ffcf3f;--gold-deep:#f5a623;
+    --white:#fdfdf8;--ink:#0e1a2b;--hit:#3fc66d;--line:rgba(255,255,255,.14);
+    --card:linear-gradient(180deg,#15263f,#101e33);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:'Reddit Sans','Hiragino Kaku Gothic ProN',sans-serif;
+    background:radial-gradient(140% 90% at 50% -10%,var(--sky2) 0%,var(--sky) 55%,#0a1420 100%);
+    color:var(--white);min-height:100%;overflow-x:hidden;-webkit-text-size-adjust:100%;}
+  .wrap{max-width:480px;margin:0 auto;padding:18px 16px 120px;position:relative;}
+  .hide{display:none!important;}
+
+  .board{background:linear-gradient(180deg,#11203a,#0c1830);border:2px solid var(--line);
+    border-radius:18px;padding:14px 16px 16px;position:relative;overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06);}
+  .board-top{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .title{font-family:'Mochiy Pop One',sans-serif;font-size:18px;line-height:1.25;color:var(--gold);
+    text-shadow:0 2px 0 rgba(0,0,0,.35);letter-spacing:.5px;}
+  .date{font-size:11px;color:#9fb2c8;font-weight:600;margin-top:3px;letter-spacing:.5px;}
+  .streak{text-align:center;background:rgba(255,207,63,.1);border:1.5px solid rgba(255,207,63,.4);
+    border-radius:14px;padding:6px 12px;min-width:78px;flex-shrink:0;}
+  .streak .num{font-family:'Mochiy Pop One',sans-serif;font-size:26px;color:var(--gold);line-height:1;}
+  .streak .lbl{font-size:9.5px;color:#d9c27a;font-weight:700;margin-top:2px;letter-spacing:.5px;}
+  .count-row{display:flex;align-items:baseline;gap:8px;margin-top:14px;}
+  .count-big{font-family:'Mochiy Pop One',sans-serif;font-size:34px;color:var(--white);line-height:1;}
+  .count-sub{font-size:13px;color:#9fb2c8;font-weight:700;}
+  .reward-chip{margin-left:auto;display:flex;align-items:center;gap:5px;
+    background:linear-gradient(180deg,var(--gold),var(--gold-deep));color:#5a3d00;font-weight:800;
+    font-size:13px;padding:7px 12px;border-radius:999px;box-shadow:0 4px 0 #c9881a,0 6px 10px rgba(0,0,0,.3);}
+  .reward-chip.locked{filter:grayscale(.7) brightness(.8);box-shadow:0 4px 0 #555,0 6px 10px rgba(0,0,0,.3);}
+  .bar{height:12px;background:rgba(0,0,0,.35);border-radius:99px;margin-top:12px;overflow:hidden;border:1px solid rgba(255,255,255,.08);}
+  .bar>i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--hit),#7be29a);transition:width .5s cubic-bezier(.2,.8,.2,1);}
+
+  .quests{margin-top:16px;display:flex;flex-direction:column;gap:11px;}
+  .quest{display:flex;align-items:center;gap:13px;background:var(--card);
+    border:2px solid var(--line);border-radius:16px;padding:13px 14px;cursor:pointer;position:relative;
+    transition:transform .12s,border-color .2s,background .2s;}
+  .quest:active{transform:scale(.98);}
+  .quest.done{background:linear-gradient(180deg,rgba(63,198,109,.16),rgba(63,198,109,.06));border-color:rgba(63,198,109,.55);}
+  .qicon{width:46px;height:46px;flex-shrink:0;border-radius:12px;display:grid;place-items:center;font-size:24px;
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);}
+  .quest.done .qicon{background:rgba(63,198,109,.22);border-color:rgba(63,198,109,.5);}
+  .qbody{flex:1;min-width:0;}
+  .qname{font-weight:800;font-size:15.5px;color:var(--white);letter-spacing:.2px;}
+  .qdesc{font-size:11.5px;color:#9fb2c8;font-weight:600;margin-top:2px;line-height:1.35;}
+  .quest.done .qname{color:#bff3cf;}
+  .qgo{font-size:11px;font-weight:800;color:var(--gold);background:rgba(255,207,63,.12);
+    border:1px solid rgba(255,207,63,.3);padding:6px 11px;border-radius:99px;flex-shrink:0;}
+  .check{width:30px;height:30px;flex-shrink:0;border-radius:50%;border:2.5px solid #3a4d66;display:grid;place-items:center;transition:all .2s;}
+  .check svg{width:16px;height:16px;opacity:0;transform:scale(.4);transition:all .25s cubic-bezier(.2,1.4,.4,1);}
+  .quest.done .check{background:var(--hit);border-color:var(--hit);box-shadow:0 0 14px rgba(63,198,109,.6);}
+  .quest.done .check svg{opacity:1;transform:scale(1);}
+
+  .winbar{margin-top:18px;text-align:center;border-radius:16px;padding:16px;
+    background:linear-gradient(180deg,rgba(255,207,63,.16),rgba(255,207,63,.04));
+    border:2px dashed rgba(255,207,63,.5);opacity:.5;transition:opacity .4s;}
+  .winbar.on{opacity:1;border-style:solid;}
+  .winbar .wt{font-family:'Mochiy Pop One',sans-serif;font-size:16px;color:var(--gold);}
+  .winbar .ws{font-size:12px;color:#d9c27a;font-weight:700;margin-top:4px;}
+
+  .tabbar{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);width:calc(100% - 32px);max-width:448px;
+    background:rgba(13,24,40,.92);backdrop-filter:blur(10px);border:1.5px solid var(--line);border-radius:18px;
+    display:flex;padding:6px;gap:4px;z-index:30;box-shadow:0 10px 30px rgba(0,0,0,.5);}
+  .tab{flex:1;text-align:center;padding:9px 2px;border-radius:13px;font-size:10.5px;font-weight:800;color:#7e90a8;cursor:pointer;transition:all .2s;}
+  .tab .ti{font-size:18px;display:block;margin-bottom:2px;}
+  .tab.active{color:var(--gold);background:rgba(255,207,63,.12);}
+
+  .panel{display:none;}
+  .panel.show{display:block;animation:fade .3s;}
+
+  .sec-title{font-family:'Mochiy Pop One',sans-serif;font-size:15px;color:var(--white);margin:24px 4px 2px;}
+  .sec-sub{font-size:11.5px;color:#9fb2c8;font-weight:600;margin:0 4px 4px;line-height:1.5;}
+
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:16px;}
+  .stat{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:15px;text-align:center;}
+  .stat .sn{font-family:'Mochiy Pop One',sans-serif;font-size:30px;color:var(--gold);line-height:1;}
+  .stat .sl{font-size:11px;color:#9fb2c8;font-weight:700;margin-top:6px;}
+  .calhead{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:8px;}
+  .calhead span{text-align:center;font-size:10px;color:#7e90a8;font-weight:800;}
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:6px;}
+  .cal .cd{aspect-ratio:1;border-radius:9px;display:grid;place-items:center;font-size:12px;font-weight:700;
+    background:#13233b;border:1px solid var(--line);color:#7e90a8;}
+  .cal .cd.win{background:linear-gradient(180deg,var(--hit),#2ea556);color:#fff;border-color:transparent;}
+  .cal .cd.part{background:rgba(255,207,63,.18);color:var(--gold);border-color:rgba(255,207,63,.4);}
+  .cal .cd.today{outline:2px solid var(--gold);outline-offset:1px;}
+
+  .screen{position:fixed;inset:0;z-index:50;background:radial-gradient(140% 90% at 50% -10%,var(--sky2),var(--sky) 60%,#0a1420);
+    display:none;flex-direction:column;}
+  .screen.show{display:flex;animation:slideup .3s;}
+  .scr-head{display:flex;align-items:center;gap:12px;padding:16px 16px 12px;border-bottom:1px solid var(--line);}
+  .scr-head .x{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.07);border:1px solid var(--line);
+    display:grid;place-items:center;font-size:20px;cursor:pointer;flex-shrink:0;color:#cdd;}
+  .scr-head .ht{font-family:'Mochiy Pop One',sans-serif;font-size:16px;}
+  .scr-head .hs{font-size:11px;color:#9fb2c8;font-weight:600;margin-top:1px;}
+  .scr-body{flex:1;overflow-y:auto;padding:16px;max-width:480px;margin:0 auto;width:100%;}
+  .scr-foot{padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);max-width:480px;margin:0 auto;width:100%;}
+
+  .lvl-pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:var(--gold);
+    background:rgba(255,207,63,.12);border:1px solid rgba(255,207,63,.35);padding:5px 11px;border-radius:99px;}
+
+  .calc-card{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:26px 20px;text-align:center;margin-top:8px;}
+  .calc-q{font-family:'Mochiy Pop One',sans-serif;font-size:42px;letter-spacing:1px;color:var(--white);line-height:1.15;}
+  .calc-input{margin-top:20px;width:100%;font-size:34px;text-align:center;font-family:'Mochiy Pop One',sans-serif;
+    background:#0b1626;border:2px solid var(--line);border-radius:14px;color:var(--gold);padding:12px;outline:none;}
+  .calc-input:focus{border-color:var(--gold);}
+  .calc-progress{display:flex;justify-content:center;gap:6px;margin-top:16px;}
+  .pip{width:13px;height:13px;border-radius:50%;background:#2c3e52;border:1px solid var(--line);}
+  .pip.ok{background:var(--hit);border-color:var(--hit);}
+  .pip.ng{background:#e0524d;border-color:#e0524d;}
+  .feedback{min-height:24px;margin-top:14px;font-weight:800;font-size:15px;}
+  .feedback.good{color:var(--hit);}
+  .feedback.bad{color:#ff9b6b;}
+  .hintbox{background:rgba(255,207,63,.08);border:1px solid rgba(255,207,63,.3);border-radius:12px;
+    padding:12px 14px;margin-top:14px;font-size:13px;line-height:1.6;color:#e9d9a8;text-align:left;display:none;}
+  .hintbox.show{display:block;animation:fade .3s;}
+
+  .btn{display:block;width:100%;border:none;border-radius:14px;font-family:inherit;font-weight:800;font-size:16px;
+    padding:15px;cursor:pointer;transition:transform .1s;}
+  .btn:active{transform:scale(.98);}
+  .btn:disabled{opacity:.6;}
+  .btn-gold{background:linear-gradient(180deg,var(--gold),var(--gold-deep));color:#5a3d00;box-shadow:0 4px 0 #c9881a;}
+  .btn-ghost{background:rgba(255,255,255,.06);color:#cdd;border:1px solid var(--line);}
+  .btn-green{background:linear-gradient(180deg,var(--hit),#2ea556);color:#fff;box-shadow:0 4px 0 #1d7a40;}
+  .btn-sm{padding:11px;font-size:14px;}
+
+  .themes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+  .theme-chip{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:16px 12px;text-align:center;cursor:pointer;transition:all .15s;}
+  .theme-chip:active{transform:scale(.97);}
+  .theme-chip .te{font-size:30px;}
+  .theme-chip .tn{font-size:13px;font-weight:800;margin-top:6px;color:#dbe6f2;}
+
+  .ai-card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:18px;margin-top:14px;}
+  .ai-passage{font-size:17px;line-height:2.1;color:#f0f4f9;font-weight:600;}
+  .ai-passage rt{font-size:9px;color:#9fb2c8;}
+  .ai-label{font-size:11px;font-weight:800;color:var(--gold);letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+  .q-list{margin-top:4px;}
+  .q-item{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:12px;padding:13px;margin-top:10px;}
+  .q-item .qq{font-weight:800;font-size:14px;color:#dbe6f2;line-height:1.5;}
+  .answer-area{width:100%;margin-top:10px;background:#0b1626;border:2px solid var(--line);border-radius:12px;
+    color:var(--white);padding:12px;font-family:inherit;font-size:15px;line-height:1.6;resize:vertical;min-height:70px;outline:none;}
+  .answer-area:focus{border-color:var(--gold);}
+  .char-count{text-align:right;font-size:11px;color:#7e90a8;font-weight:700;margin-top:4px;}
+  .char-count.warn{color:var(--gold);}
+
+  .sensei-reply{background:linear-gradient(180deg,rgba(63,198,109,.12),rgba(63,198,109,.03));
+    border:1.5px solid rgba(63,198,109,.4);border-radius:16px;padding:16px;margin-top:14px;}
+  .sensei-reply .sr-head{display:flex;align-items:center;gap:8px;font-weight:800;color:#7be29a;font-size:13px;margin-bottom:8px;}
+  .sensei-reply .sr-body{font-size:14px;line-height:1.7;color:#e3f3e9;white-space:pre-wrap;}
+
+  .loading{text-align:center;padding:30px 16px;color:#9fb2c8;font-weight:700;font-size:14px;}
+  .loading .dots{display:inline-block;animation:blink 1.2s infinite;}
+  .spinner{width:40px;height:40px;border:4px solid rgba(255,255,255,.1);border-top-color:var(--gold);
+    border-radius:50%;margin:0 auto 14px;animation:spin 1s linear infinite;}
+
+  .log-item{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:13px;margin-top:10px;}
+  .log-meta{display:flex;justify-content:space-between;font-size:11px;color:#7e90a8;font-weight:700;margin-bottom:6px;}
+  .log-tag{font-size:10px;font-weight:800;padding:2px 8px;border-radius:99px;background:rgba(255,207,63,.15);color:var(--gold);}
+  .log-q{font-size:12.5px;color:#9fb2c8;font-weight:700;line-height:1.5;}
+  .log-a{font-size:13.5px;color:#e3eaf2;line-height:1.6;margin-top:5px;padding-left:10px;border-left:2px solid var(--line);}
+
+  .roadmap{margin-top:14px;display:flex;flex-direction:column;gap:10px;}
+  .rm{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:13px 14px;}
+  .rm .rmh{display:flex;align-items:center;gap:9px;font-weight:800;font-size:14.5px;}
+  .rm .rmh .e{font-size:19px;}
+  .rm .rmh .tag{margin-left:auto;font-size:9.5px;font-weight:800;padding:3px 8px;border-radius:99px;letter-spacing:.3px;}
+  .tag.top{background:rgba(245,166,35,.2);color:var(--gold);border:1px solid rgba(245,166,35,.4);}
+  .tag.keep{background:rgba(63,198,109,.18);color:#7be29a;border:1px solid rgba(63,198,109,.4);}
+  .rm ul{margin:9px 0 0;padding-left:18px;}
+  .rm li{font-size:12.5px;color:#c4d2e3;line-height:1.6;margin-bottom:3px;}
+
+  .reset{margin:22px auto 0;display:block;background:none;border:1px solid var(--line);color:#7e90a8;font-size:11px;font-weight:700;padding:8px 16px;border-radius:99px;cursor:pointer;}
+
+  .burst{position:fixed;inset:0;pointer-events:none;z-index:60;}
+  .spark{position:absolute;width:11px;height:11px;border-radius:2px;will-change:transform,opacity;}
+  .bigwin{position:fixed;inset:0;z-index:70;display:none;place-items:center;background:rgba(8,14,24,.82);backdrop-filter:blur(3px);}
+  .bigwin.show{display:grid;animation:fade .3s;}
+  .bigwin-card{text-align:center;padding:34px 30px;max-width:300px;background:linear-gradient(180deg,#16273f,#0e1c30);
+    border:2.5px solid var(--gold);border-radius:24px;box-shadow:0 0 50px rgba(255,207,63,.4);animation:pop .5s;}
+  .bigwin .trophy{font-size:64px;animation:bounce 1s infinite;}
+  .bigwin h2{font-family:'Mochiy Pop One',sans-serif;color:var(--gold);font-size:24px;margin-top:8px;}
+  .bigwin p{font-size:13.5px;color:#d9c27a;font-weight:700;margin-top:8px;line-height:1.5;}
+  .bigwin .yen{font-family:'Mochiy Pop One',sans-serif;font-size:40px;color:var(--white);margin-top:12px;}
+  .bigwin button{margin-top:20px;background:linear-gradient(180deg,var(--gold),var(--gold-deep));border:none;color:#5a3d00;
+    font-weight:800;font-size:15px;padding:12px 30px;border-radius:99px;cursor:pointer;box-shadow:0 4px 0 #c9881a;font-family:inherit;}
+
+  @keyframes pop{0%{transform:scale(.8);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  @keyframes slideup{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="panel show" id="panel-today">
+    <div class="board">
+      <div class="board-top">
+        <div><div class="title">まいにち九段チャレンジ</div><div class="date" id="dateLabel">--</div></div>
+        <div class="streak"><div class="num" id="streakNum">0</div><div class="lbl">れんしょう</div></div>
+      </div>
+      <div class="count-row">
+        <span class="count-big"><span id="doneNum">0</span><span style="font-size:18px;color:#9fb2c8">/5</span></span>
+        <span class="count-sub">クエストクリア</span>
+        <span class="reward-chip locked" id="rewardChip">💰 100円</span>
+      </div>
+      <div class="bar"><i id="barFill"></i></div>
+    </div>
+    <div class="quests" id="questList"></div>
+    <div class="winbar" id="winBar">
+      <div class="wt" id="winT">⚾ 今日はあと 5 つ！</div>
+      <div class="ws" id="winS">ぜんぶクリアでホームラン → 100円ゲット</div>
+    </div>
+    <button class="reset" id="resetBtn">今日のチェックをリセット（保護者用）</button>
+  </div>
+
+  <div class="panel" id="panel-record">
+    <div class="board"><div class="board-top"><div><div class="title">きろく</div><div class="date">これまでのがんばり</div></div></div></div>
+    <div class="stat-grid">
+      <div class="stat"><div class="sn" id="stTotal">0</div><div class="sl">ホームランの日</div></div>
+      <div class="stat"><div class="sn" id="stBest">0</div><div class="sl">さいこう連勝</div></div>
+      <div class="stat"><div class="sn" id="stYen">0</div><div class="sl">ためた金額(円)</div></div>
+      <div class="stat"><div class="sn" id="stCalc">Lv.1</div><div class="sl">計算レベル</div></div>
+    </div>
+    <div class="sec-title">カレンダー</div>
+    <div class="sec-sub">緑=ぜんぶクリア / 黄=とちゅうまで</div>
+    <div class="calhead"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div>
+    <div class="cal" id="calGrid"></div>
+  </div>
+
+  <div class="panel" id="panel-parent">
+    <div class="board"><div class="board-top"><div><div class="title">先生メモ</div><div class="date">息子さんの答え・先生の講評（保護者用）</div></div></div></div>
+    <div class="sec-sub" style="margin-top:14px;">作文・読解・音読・理科社会で、息子さんが書いた答えとAI先生の講評がここに残ります。新しい順。</div>
+    <div id="logList"></div>
+  </div>
+
+  <div class="panel" id="panel-plan">
+    <div class="board"><div class="board-top"><div><div class="title">さくせん</div><div class="date">九段中をめざすロードマップ</div></div></div></div>
+    <div class="sec-title">5つのデイリークエスト</div>
+    <div class="sec-sub">むりせず、まいにち続けるのがいちばん強い。</div>
+    <div class="roadmap">
+      <div class="rm"><div class="rmh"><span class="e">🦉</span>Duolingo<span class="tag keep">毎日</span></div><ul><li>デイリークエストをクリア（保護者が確認）</li></ul></div>
+      <div class="rm"><div class="rmh"><span class="e">🔢</span>計算<span class="tag top">最優先</span></div><ul><li>アプリが毎日レベルにあった問題を出す</li><li>たし算→ひき算→かけ算→わり算→割合・速さ へ自動で進む</li></ul></div>
+      <div class="rm"><div class="rmh"><span class="e">📖</span>音読<span class="tag top">最優先</span></div><ul><li>先生が毎日ちょうどいい短文を出す → 声に出して読む</li><li>読んだら「どんな話？」に答える（要約の練習）</li></ul></div>
+      <div class="rm"><div class="rmh"><span class="e">✍️</span>作文・読解</div><ul><li>先生が九段ふうのお題を出す → 200字で書く</li><li>先生が褒めて、やさしく直してくれる</li></ul></div>
+      <div class="rm"><div class="rmh"><span class="e">🔬</span>理科・社会のタネ</div><ul><li>先生が「今日のなぜ？」を出す → 考えて答える</li><li>資料を読んで考える力（九段でいちばん大事）</li></ul></div>
+    </div>
+    <div class="sec-title">九段中のしくみ（保護者メモ）</div>
+    <div class="sec-sub">報告書200＋適性1(国語)200＋適性2(資料)300＋適性3(理数)300＝1000点。配点の6割が算数・理科・資料系。報告書は小4から入るので学校の成績も大事。</div>
+    <button class="reset" id="resetAllBtn">全データを初期化（保護者用）</button>
+  </div>
+</div>
+
+<div class="tabbar">
+  <div class="tab active" data-tab="today"><span class="ti">⚾</span>きょう</div>
+  <div class="tab" data-tab="record"><span class="ti">📅</span>きろく</div>
+  <div class="tab" data-tab="parent"><span class="ti">📝</span>先生メモ</div>
+  <div class="tab" data-tab="plan"><span class="ti">🗺️</span>さくせん</div>
+</div>
+
+<div class="screen" id="screen"><div id="screenInner"></div></div>
+
+<div class="burst" id="burst"></div>
+<div class="bigwin" id="bigWin"><div class="bigwin-card">
+  <div class="trophy">🏆</div><h2>ホームラン！</h2>
+  <p>今日のクエスト、ぜんぶクリア！<br>れんしょう記録ものびたよ</p>
+  <div class="yen">+100円</div>
+  <button id="bigWinClose">やったー！</button>
+</div></div>
+
+<script>
+const THEMES=[
+  {id:'baseball',e:'⚾',n:'野球・スポーツ',kw:'野球・MLB・大谷翔平などのスポーツ'},
+  {id:'nature',e:'🦖',n:'生き物・宇宙',kw:'生き物・恐竜・宇宙・自然'},
+  {id:'mecha',e:'🚀',n:'ゲーム・メカ',kw:'乗り物・ロボット・メカ・ゲームのしくみ'},
+  {id:'history',e:'⚔️',n:'歴史・冒険',kw:'歴史上の人物・偉人・サバイバル・冒険'},
+];
+const QUESTS=[
+  {id:'duo', icon:'🦉',name:'Duolingo',     desc:'デイリークエストをクリア', type:'check'},
+  {id:'calc',icon:'🔢',name:'計算',         desc:'5問チャレンジ',           type:'activity'},
+  {id:'read',icon:'📖',name:'音読',         desc:'先生の文章を声に出して',   type:'activity'},
+  {id:'write',icon:'✍️',name:'作文・読解',  desc:'200字でお題に答える',     type:'activity'},
+  {id:'sci', icon:'🔬',name:'理科社会のタネ',desc:'今日のなぜ？を考える',     type:'activity'},
+];
+const WD=['日','月','火','水','木','金','土'];
+const todayKey=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
+
+let state={today:todayKey(),checks:{},history:{},calcLevel:1,calcStats:{correct:0,wrong:0},log:[]};
+
+async function load(){
+  try{
+    const r=await window.storage.get('kudan-state-v2');
+    if(r&&r.value){const s=JSON.parse(r.value);
+      state.history=s.history||{};state.calcLevel=s.calcLevel||1;
+      state.calcStats=s.calcStats||{correct:0,wrong:0};state.log=s.log||[];
+      if(s.today===todayKey()){state.today=s.today;state.checks=s.checks||{};}
+      else{state.today=todayKey();state.checks={};}
+    }
+  }catch(e){}
+}
+async function save(){
+  const done=Object.values(state.checks).filter(Boolean).length;
+  state.history[state.today]={count:done,quests:{...state.checks}};
+  try{await window.storage.set('kudan-state-v2',JSON.stringify(state));}catch(e){}
+}
+async function addLog(tag,question,answer,reply){
+  state.log.unshift({date:state.today,ts:Date.now(),tag,question,answer,reply});
+  if(state.log.length>200)state.log=state.log.slice(0,200);
+  await save();
+}
+
+async function askAI(system,user,maxTokens){
+  const res=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:maxTokens||1000,
+      system:system,messages:[{role:"user",content:user}]})
+  });
+  const data=await res.json();
+  return data.content.filter(b=>b.type==="text").map(b=>b.text).join("\n").trim();
+}
+function parseJSON(txt){
+  let t=txt.replace(/```json/g,'').replace(/```/g,'').trim();
+  const a=t.indexOf('{'),b=t.lastIndexOf('}');
+  if(a>=0&&b>=0)t=t.slice(a,b+1);
+  return JSON.parse(t);
+}
+const GRADE_CONTEXT=`相手は小学4年生の男の子。中学受験で千代田区立九段中等教育学校（公立中高一貫校）の適性検査を目指している。
+適性検査の特徴：知識の暗記より「資料を読んで考え、自分の言葉で書く力」を重視。国語は要約と意見作文。算数は割合・速さ・比。理科社会は資料の読み取り。
+この子は読解がまだ苦手で、漫画は読めるが小説は苦手。だが英語と野球が大好きで、褒められるとやる気が出るタイプ。
+だからとにかく優しく、たくさん褒めて、絵文字も使って、楽しく前向きにする。むずかしい漢字にはふりがなをつける。`;
+
+function renderQuests(){
+  const list=document.getElementById('questList');list.innerHTML='';
+  QUESTS.forEach(q=>{
+    const done=!!state.checks[q.id];
+    const el=document.createElement('div');
+    el.className='quest'+(done?' done':'');
+    const right = q.type==='activity' && !done
+      ? `<div class="qgo">やる ▶</div>`
+      : `<div class="check"><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
+    el.innerHTML=`<div class="qicon">${q.icon}</div>
+      <div class="qbody"><div class="qname">${q.name}</div><div class="qdesc">${q.desc}</div></div>${right}`;
+    el.addEventListener('click',()=>{
+      if(q.type==='check'){toggle(q.id);}
+      else if(done){toggle(q.id);}
+      else{openActivity(q.id);}
+    });
+    list.appendChild(el);
+  });
+}
+function renderTop(){
+  const done=Object.values(state.checks).filter(Boolean).length;
+  document.getElementById('doneNum').textContent=done;
+  document.getElementById('barFill').style.width=(done/5*100)+'%';
+  document.getElementById('streakNum').textContent=calcStreak();
+  const d=new Date();document.getElementById('dateLabel').textContent=`${d.getMonth()+1}月${d.getDate()}日(${WD[d.getDay()]})`;
+  const chip=document.getElementById('rewardChip'),wb=document.getElementById('winBar');
+  if(done===5){chip.classList.remove('locked');wb.classList.add('on');
+    document.getElementById('winT').innerHTML='🎉 ぜんぶクリア！ホームラン！';
+    document.getElementById('winS').textContent='今日のごほうび 100円ゲット！';}
+  else{chip.classList.add('locked');wb.classList.remove('on');
+    document.getElementById('winT').innerHTML=`⚾ 今日はあと ${5-done} つ！`;
+    document.getElementById('winS').textContent='ぜんぶクリアでホームラン → 100円ゲット';}
+}
+let wasComplete=false;
+function toggle(id){
+  state.checks[id]=!state.checks[id];
+  renderQuests();renderTop();save();
+  const done=Object.values(state.checks).filter(Boolean).length;
+  if(done===5&&!wasComplete){wasComplete=true;homerun();}
+  if(done<5)wasComplete=false;
+}
+function completeQuest(id){
+  if(!state.checks[id]){state.checks[id]=true;
+    renderQuests();renderTop();save();
+    const done=Object.values(state.checks).filter(Boolean).length;
+    if(done===5&&!wasComplete){wasComplete=true;setTimeout(homerun,400);}
+  }
+}
+
+function calcStreak(){
+  let streak=0;const d=new Date();
+  for(let i=0;i<400;i++){
+    const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const h=state.history[k];
+    const full=k===state.today?(Object.values(state.checks).filter(Boolean).length===5):(h&&h.count===5);
+    if(full)streak++;else if(k===state.today){}else break;
+    d.setDate(d.getDate()-1);
+  }return streak;
+}
+function bestStreak(){
+  const allFull={};Object.keys(state.history).forEach(k=>{if(state.history[k].count===5)allFull[k]=true;});
+  if(Object.values(state.checks).filter(Boolean).length===5)allFull[state.today]=true;
+  const sorted=Object.keys(allFull).sort();let best=0,cur=0,prev=null;
+  for(const k of sorted){
+    if(prev){const pd=new Date(prev);pd.setDate(pd.getDate()+1);
+      const nk=`${pd.getFullYear()}-${String(pd.getMonth()+1).padStart(2,'0')}-${String(pd.getDate()).padStart(2,'0')}`;
+      cur=nk===k?cur+1:1;}else cur=1;
+    best=Math.max(best,cur);prev=k;
+  }return best;
+}
+
+const CALC_LEVELS={
+  1:{name:'たし算①',gen:()=>{const a=ri(3,12),b=ri(2,8);return{q:`${a} + ${b}`,ans:a+b};}},
+  2:{name:'ひき算①',gen:()=>{const a=ri(8,20),b=ri(2,a-1);return{q:`${a} - ${b}`,ans:a-b};}},
+  3:{name:'たし算②',gen:()=>{const a=ri(15,89),b=ri(11,89);return{q:`${a} + ${b}`,ans:a+b};}},
+  4:{name:'ひき算②',gen:()=>{const a=ri(30,99),b=ri(11,a-5);return{q:`${a} - ${b}`,ans:a-b};}},
+  5:{name:'たし算③',gen:()=>{const a=ri(105,899),b=ri(105,899);return{q:`${a} + ${b}`,ans:a+b};}},
+  6:{name:'ひき算③',gen:()=>{const a=ri(300,999),b=ri(105,a-20);return{q:`${a} - ${b}`,ans:a-b};}},
+  7:{name:'かけ算①',gen:()=>{const a=ri(2,9),b=ri(2,9);return{q:`${a} × ${b}`,ans:a*b};}},
+  8:{name:'かけ算②',gen:()=>{const a=ri(12,49),b=ri(2,9);return{q:`${a} × ${b}`,ans:a*b};}},
+  9:{name:'わり算①',gen:()=>{const b=ri(2,9),ans=ri(2,9);return{q:`${b*ans} ÷ ${b}`,ans:ans};}},
+  10:{name:'わり算②',gen:()=>{const b=ri(3,9),ans=ri(3,12),r=ri(1,b-1);return{q:`${b*ans+r} ÷ ${b} の商は？`,ans:ans,divmod:true};}},
+  11:{name:'割合',gen:()=>{const base=ri(2,9)*10,p=[10,20,25,50][ri(0,3)];return{q:`${base}の${p}%`,ans:Math.round(base*p/100)};}},
+  12:{name:'速さ',gen:()=>{const sp=ri(3,9)*10,t=ri(2,6);return{q:`時速${sp}kmで${t}時間で何km？`,ans:sp*t};}},
+};
+function ri(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+const MAX_LEVEL=12;
+
+let calcSession=null;
+function startCalc(){
+  const lvl=state.calcLevel;const problems=[];
+  for(let i=0;i<5;i++)problems.push(CALC_LEVELS[lvl].gen());
+  calcSession={lvl,problems,idx:0,results:[]};
+  renderCalc();
+}
+function renderCalc(){
+  const s=calcSession,L=CALC_LEVELS[s.lvl],p=s.problems[s.idx];
+  const pips=s.problems.map((_,i)=>{let c='';if(i<s.idx)c=s.results[i]?'ok':'ng';return `<div class="pip ${c}"></div>`;}).join('');
+  document.getElementById('screenInner').innerHTML=`
+   <div class="screen show" style="position:static;display:flex;">
+    <div class="scr-head">
+      <div class="x" onclick="closeScreen()">✕</div>
+      <div><div class="ht">🔢 計算チャレンジ</div><div class="hs">${s.idx+1}問目 / 5問</div></div>
+      <div style="margin-left:auto"><span class="lvl-pill">Lv.${s.lvl} ${L.name}</span></div>
+    </div>
+    <div class="scr-body">
+      <div class="calc-card">
+        <div class="calc-q">${p.q}</div>
+        <input class="calc-input" id="calcIn" inputmode="numeric" pattern="[0-9]*" placeholder="？" autocomplete="off">
+        ${p.divmod?`<div style="font-size:12px;color:#9fb2c8;margin-top:8px;font-weight:700">わりきれず「あまり」が出るよ。商（=何回われるか）を入れてね</div>`:''}
+        <div class="calc-progress">${pips}</div>
+        <div class="feedback" id="calcFb"></div>
+        <div class="hintbox" id="calcHint"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="hintBtn" style="margin-top:14px;">🤔 ヒントをみる（先生）</button>
+    </div>
+    <div class="scr-foot"><button class="btn btn-gold" id="calcSubmit">こたえる</button></div>
+   </div>`;
+  const input=document.getElementById('calcIn');setTimeout(()=>input.focus(),100);
+  input.addEventListener('keydown',e=>{if(e.key==='Enter')submitCalc();});
+  document.getElementById('calcSubmit').addEventListener('click',submitCalc);
+  document.getElementById('hintBtn').addEventListener('click',showCalcHint);
+}
+function submitCalc(){
+  const s=calcSession,p=s.problems[s.idx];
+  const input=document.getElementById('calcIn');const val=parseInt(input.value,10);
+  if(isNaN(val)){input.focus();return;}
+  const correct=val===p.ans;s.results[s.idx]=correct;
+  const fb=document.getElementById('calcFb');
+  if(correct){fb.textContent='⭕ せいかい！ナイスバッティング！';fb.className='feedback good';
+    beep(680,.12,'triangle');setTimeout(()=>beep(900,.12,'triangle'),90);
+    const r=input.getBoundingClientRect();sparks(r.left+r.width/2,r.top,8,['#3fc66d','#7be29a','#ffcf3f']);}
+  else{fb.textContent=`おしい！ こたえは ${p.ans} だよ`;fb.className='feedback bad';beep(200,.2,'sawtooth',.1);}
+  document.getElementById('calcSubmit').disabled=true;
+  setTimeout(()=>{s.idx++;if(s.idx>=5)finishCalc();else renderCalc();},correct?900:1800);
+}
+async function showCalcHint(){
+  const box=document.getElementById('calcHint'),btn=document.getElementById('hintBtn');
+  box.classList.add('show');box.innerHTML='<span class="dots">先生がヒントを考えているよ…</span>';btn.disabled=true;
+  const p=calcSession.problems[calcSession.idx];
+  try{const hint=await askAI(GRADE_CONTEXT,`次の計算問題のヒントを、答えは絶対に言わずに、解き方のコツだけ2〜3文で優しく教えて。絵文字も少し。問題：${p.q}`,300);
+    box.innerHTML=hint;}catch(e){box.innerHTML='ヒント：まず大きいくらいから考えてみよう！一の位、十の位の順にていねいにね。';}
+}
+async function finishCalc(){
+  const s=calcSession;const correct=s.results.filter(Boolean).length;
+  state.calcStats.correct+=correct;state.calcStats.wrong+=(5-correct);
+  let levelMsg='',newLevel=state.calcLevel;
+  if(correct>=4&&state.calcLevel<MAX_LEVEL){newLevel=state.calcLevel+1;levelMsg=`🎉 レベルアップ！ つぎは Lv.${newLevel}「${CALC_LEVELS[newLevel].name}」だよ`;}
+  else if(correct<=1&&state.calcLevel>1){newLevel=state.calcLevel-1;levelMsg=`むりせず Lv.${newLevel} にもどして、とくいになろう！`;}
+  else levelMsg='この調子！ つづければどんどん強くなるよ💪';
+  state.calcLevel=newLevel;await save();
+  document.getElementById('screenInner').innerHTML=`
+   <div class="screen show" style="position:static;display:flex;">
+    <div class="scr-head"><div class="x" onclick="closeScreen()">✕</div><div><div class="ht">🔢 計算チャレンジ</div><div class="hs">けっか</div></div></div>
+    <div class="scr-body">
+      <div class="calc-card">
+        <div style="font-size:54px">${correct>=4?'🏆':correct>=2?'👏':'💪'}</div>
+        <div class="calc-q" style="font-size:30px;margin-top:6px">${correct} / 5 せいかい</div>
+        <div style="margin-top:16px;font-size:14px;color:#e9d9a8;font-weight:700;line-height:1.6">${levelMsg}</div>
+      </div>
+    </div>
+    <div class="scr-foot"><button class="btn btn-green" onclick="finishActivity('calc')">クエストクリア！ ⚾</button></div>
+   </div>`;
+  beep(523,.15,'square');setTimeout(()=>beep(784,.2,'square'),140);
+}
+
+async function startReading(theme){
+  showLoading('音読','先生が今日の文章を書いているよ');
+  let data;
+  try{
+    const raw=await askAI(GRADE_CONTEXT,
+      `小学4年生が音読する短い文章を1つ作って。テーマは「${theme.kw}」。
+条件：
+- 150〜200字程度。3〜4文。
+- 内容が頭にのこる、おもしろい豆知識やエピソード。
+- 小4が声に出して読める語彙。むずかしい漢字には《》でふりがな（例：野球《やきゅう》）。
+- 読んだあとの「読みとり質問」を3つ。①だれが何をした話か（要約）②いちばんすごい/おもしろい所③きみはどう思う。
+JSONのみで出力。形式：{"title":"みじかいタイトル","passage":"本文","questions":["質問1","質問2","質問3"]}`,900);
+    data=parseJSON(raw);
+  }catch(e){data={title:'今日の一文',passage:'うまく作れなかったから、すきな本を10分音読しよう！読んだら「どんな話だった？」を1つ言ってみてね。',questions:['だれが何をした話だった？','いちばんおもしろかったところは？','きみはどう思った？']};}
+  renderReading(theme,data);
+}
+function rubyize(t){return (t||'').replace(/([一-龠々]+)《([ぁ-ん]+)》/g,'<ruby>$1<rt>$2</rt></ruby>');}
+function renderReading(theme,data){
+  document.getElementById('screenInner').innerHTML=`
+   <div class="screen show" style="position:static;display:flex;">
+    <div class="scr-head"><div class="x" onclick="closeScreen()">✕</div>
+      <div><div class="ht">📖 音読</div><div class="hs">${theme.e} ${theme.n}</div></div></div>
+    <div class="scr-body">
+      <div class="ai-card">
+        <div class="ai-label">📣 こえに出して読もう</div>
+        <div class="ai-passage">${rubyize(data.passage)}</div>
+      </div>
+      <div class="sec-sub" style="margin-top:16px">読めたら、下の質問にこたえてね（声でも、文字でもOK）</div>
+      <div class="q-list" id="readQs"></div>
+      <div id="readReply"></div>
+    </div>
+    <div class="scr-foot" id="readFoot"><button class="btn btn-gold" id="readDone">こたえを先生にみせる</button></div>
+   </div>`;
+  const qbox=document.getElementById('readQs');
+  data.questions.forEach((q,i)=>{
+    const d=document.createElement('div');d.className='q-item';
+    d.innerHTML=`<div class="qq">${i+1}. ${q}</div><textarea class="answer-area" data-i="${i}" placeholder="ここに答えてね（みじかくてOK）"></textarea>`;
+    qbox.appendChild(d);
+  });
+  document.getElementById('readDone').addEventListener('click',()=>submitReading(theme,data));
+}
+async function submitReading(theme,data){
+  const ans=[...document.querySelectorAll('#readQs .answer-area')].map(t=>t.value.trim());
+  if(ans.every(a=>!a)){alert('1つでいいから、答えを書いてみよう！');return;}
+  document.getElementById('readFoot').innerHTML='<div class="loading"><span class="dots">先生が読んでいるよ…</span></div>';
+  const qa=data.questions.map((q,i)=>`Q${i+1}:${q}\nA${i+1}:${ans[i]||'（こたえなし）'}`).join('\n');
+  let reply;
+  try{reply=await askAI(GRADE_CONTEXT,
+    `小4が音読して、読みとり質問に答えました。文章：「${data.passage}」\n${qa}\nこの子の答えを、とにかく褒めて、よかった所を具体的に。1つだけ「こう考えるともっといいよ」を優しく。最後に短い応援。150字程度、絵文字も。`,500);
+  }catch(e){reply='よく読めたね！すごい！⚾ 答えてくれてありがとう。つづけていけば、どんどん読む力がついていくよ。明日もいっしょにがんばろう！';}
+  document.getElementById('readReply').innerHTML=`<div class="sensei-reply"><div class="sr-head">🦉 先生より</div><div class="sr-body">${reply}</div></div>`;
+  document.getElementById('readFoot').innerHTML='<button class="btn btn-green" onclick="finishActivity(\'read\')">クエストクリア！ ⚾</button>';
+  await addLog('音読',data.title+'：'+data.questions[0],ans.join(' / '),reply);
+}
+
+async function startWriting(theme){
+  showLoading('作文','先生が今日のお題を考えているよ');
+  let data;
+  try{const raw=await askAI(GRADE_CONTEXT,
+    `小4向けの「200字 意見作文」のお題を1つ作って。九段中の適性検査をイメージ（自分の考えを理由とともに書く）。
+テーマは「${theme.kw}」に関連づけて、でも自分の体験や考えを書けるもの。やさしい言葉で、書きたくなるお題に。むずかしい漢字には《》でふりがな。
+JSONのみ：{"theme":"お題の文","hint":"書き出しのヒント1文"}`,500);
+    data=parseJSON(raw);
+  }catch(e){data={theme:'きみが「これだけは負けない！」と思うことは何ですか。理由もいっしょに書いてみよう。',hint:'「ぼくが負けないのは○○です。なぜなら…」から始めてみよう。'};}
+  renderWriting(theme,data);
+}
+function renderWriting(theme,data){
+  document.getElementById('screenInner').innerHTML=`
+   <div class="screen show" style="position:static;display:flex;">
+    <div class="scr-head"><div class="x" onclick="closeScreen()">✕</div>
+      <div><div class="ht">✍️ 作文・読解</div><div class="hs">${theme.e} 200字で書こう</div></div></div>
+    <div class="scr-body">
+      <div class="ai-card">
+        <div class="ai-label">📝 今日のお題</div>
+        <div style="font-size:16px;line-height:1.8;color:#f0f4f9;font-weight:700">${rubyize(data.theme)}</div>
+        <div style="margin-top:12px;font-size:12.5px;color:#9fb2c8;font-weight:700;background:rgba(255,255,255,.04);padding:10px;border-radius:10px">💡 ${rubyize(data.hint)}</div>
+      </div>
+      <textarea class="answer-area" id="writeArea" style="min-height:160px;margin-top:14px" placeholder="ここに書いてね（200字くらい）"></textarea>
+      <div class="char-count" id="charCount">0字</div>
+      <div id="writeReply"></div>
+    </div>
+    <div class="scr-foot" id="writeFoot"><button class="btn btn-gold" id="writeDone">先生にみてもらう</button></div>
+   </div>`;
+  const area=document.getElementById('writeArea'),cc=document.getElementById('charCount');
+  area.addEventListener('input',()=>{const n=area.value.length;cc.textContent=n+'字';cc.className='char-count'+(n>=150&&n<=260?' warn':'');});
+  setTimeout(()=>area.focus(),100);
+  document.getElementById('writeDone').addEventListener('click',()=>submitWriting(theme,data));
+}
+async function submitWriting(theme,data){
+  const text=document.getElementById('writeArea').value.trim();
+  if(text.length<10){alert('もう少し書いてみよう！みじかくても大丈夫だよ');return;}
+  document.getElementById('writeFoot').innerHTML='<div class="loading"><span class="dots">先生が読んでいるよ…</span></div>';
+  let reply;
+  try{reply=await askAI(GRADE_CONTEXT,
+    `小4が「200字意見作文」を書きました。お題：「${data.theme}」\n作文：「${text}」\n講評を：①まず具体的にたくさん褒める（良い言葉づかい・考えを名ざしで）②「もっとよくなるポイント」を1つだけ優しく（理由を付けるともっといい、など）③最後に応援。小4が「また書きたい」と思えるように。200字程度、絵文字も。`,600);
+  }catch(e){reply='さいごまで書けたね、すごい！⚾ 自分の考えがちゃんと書けています。次は「なぜそう思うのか」の理由をもう1つ足すと、もっと強い作文になるよ。この調子でつづけよう！';}
+  document.getElementById('writeReply').innerHTML=`<div class="sensei-reply"><div class="sr-head">🦉 先生より</div><div class="sr-body">${reply}</div></div>`;
+  document.getElementById('writeFoot').innerHTML='<button class="btn btn-green" onclick="finishActivity(\'write\')">クエストクリア！ ⚾</button>';
+  await addLog('作文',data.theme,text,reply);
+}
+
+async function startScience(theme){
+  showLoading('理科社会のタネ','先生が今日のなぞを用意しているよ');
+  let data;
+  try{const raw=await askAI(GRADE_CONTEXT,
+    `小4向けの「今日のなぜ？」を1つ。テーマ「${theme.kw}」。身のまわりの不思議で、考えるのが楽しい問い。九段の適性検査は「資料を読んで考える」力が大事なので、丸暗記ではなく"考えさせる"問いに。
+形式JSONのみ：{"question":"なぜ〜？という問い","think":"考えるヒント（答えは言いすぎない）1〜2文"}。むずかしい漢字には《》でふりがな。`,500);
+    data=parseJSON(raw);
+  }catch(e){data={question:'なぜ野球のボールには赤い縫い目があるのだろう？',think:'ボールが空気の中をどう飛ぶか、想像してみよう。ツルツルだったらどうなるかな？'};}
+  renderScience(theme,data);
+}
+function renderScience(theme,data){
+  document.getElementById('screenInner').innerHTML=`
+   <div class="screen show" style="position:static;display:flex;">
+    <div class="scr-head"><div class="x" onclick="closeScreen()">✕</div>
+      <div><div class="ht">🔬 理科社会のタネ</div><div class="hs">${theme.e} 今日のなぜ？</div></div></div>
+    <div class="scr-body">
+      <div class="ai-card">
+        <div class="ai-label">❓ 今日のなぜ？</div>
+        <div style="font-size:17px;line-height:1.8;color:#f0f4f9;font-weight:700">${rubyize(data.question)}</div>
+        <div style="margin-top:12px;font-size:12.5px;color:#9fb2c8;font-weight:700;background:rgba(255,255,255,.04);padding:10px;border-radius:10px">💡 ${rubyize(data.think)}</div>
+      </div>
+      <div class="sec-sub" style="margin-top:16px">じぶんの考えを書いてみよう（正解はないよ。考えることが大事！）</div>
+      <textarea class="answer-area" id="sciArea" style="min-height:110px" placeholder="ぼくは○○だと思う。なぜなら…"></textarea>
+      <div id="sciReply"></div>
+    </div>
+    <div class="scr-foot" id="sciFoot"><button class="btn btn-gold" id="sciDone">先生にみせる</button></div>
+   </div>`;
+  setTimeout(()=>document.getElementById('sciArea').focus(),100);
+  document.getElementById('sciDone').addEventListener('click',()=>submitScience(theme,data));
+}
+async function submitScience(theme,data){
+  const text=document.getElementById('sciArea').value.trim();
+  if(text.length<5){alert('短くていいよ。思ったことを書いてみよう！');return;}
+  document.getElementById('sciFoot').innerHTML='<div class="loading"><span class="dots">先生が読んでいるよ…</span></div>';
+  let reply;
+  try{reply=await askAI(GRADE_CONTEXT,
+    `小4が「今日のなぜ？」に自分の考えを書きました。問い：「${data.question}」\n答え：「${text}」\n①「自分で考えたこと」をまず思いきり褒める（合っていなくてもOK、考えた姿勢を）②正しい答え・本当のしくみを、小4にわかるように楽しく教える③「すごいね、物知りになったね」と応援。200字程度、絵文字も。`,600);
+  }catch(e){reply='自分で考えてえらい！⚾ 考えること自体がいちばん大事なんだ。つづけていくと、どんどん「なぜ？」が分かる人になるよ。また明日のなぞも楽しみにしててね！';}
+  document.getElementById('sciReply').innerHTML=`<div class="sensei-reply"><div class="sr-head">🦉 先生より</div><div class="sr-body">${reply}</div></div>`;
+  document.getElementById('sciFoot').innerHTML='<button class="btn btn-green" onclick="finishActivity(\'sci\')">クエストクリア！ ⚾</button>';
+  await addLog('理科社会',data.question,text,reply);
+}
+
+function openActivity(id){
+  document.getElementById('screen').classList.add('show');
+  if(id==='calc'){startCalc();return;}
+  chooseTheme(id);
+}
+function chooseTheme(id){
+  const titles={read:'📖 音読',write:'✍️ 作文・読解',sci:'🔬 理科社会のタネ'};
+  document.getElementById('screenInner').innerHTML=`
+   <div class="screen show" style="position:static;display:flex;">
+    <div class="scr-head"><div class="x" onclick="closeScreen()">✕</div>
+      <div><div class="ht">${titles[id]}</div><div class="hs">今日のテーマをえらぼう</div></div></div>
+    <div class="scr-body">
+      <div class="sec-sub" style="margin-top:4px">どのテーマでやる？タップしてね</div>
+      <div class="themes" id="themeGrid"></div>
+    </div>
+   </div>`;
+  const grid=document.getElementById('themeGrid');
+  THEMES.forEach(t=>{
+    const el=document.createElement('div');el.className='theme-chip';
+    el.innerHTML=`<div class="te">${t.e}</div><div class="tn">${t.n}</div>`;
+    el.addEventListener('click',()=>{
+      if(id==='read')startReading(t);else if(id==='write')startWriting(t);else if(id==='sci')startScience(t);
+    });
+    grid.appendChild(el);
+  });
+}
+function showLoading(title,msg){
+  document.getElementById('screenInner').innerHTML=`
+   <div class="screen show" style="position:static;display:flex;">
+    <div class="scr-head"><div class="x" onclick="closeScreen()">✕</div><div><div class="ht">${title}</div></div></div>
+    <div class="scr-body"><div class="loading"><div class="spinner"></div>${msg}<span class="dots">…</span></div></div>
+   </div>`;
+}
+function finishActivity(id){closeScreen();completeQuest(id);}
+function closeScreen(){document.getElementById('screen').classList.remove('show');document.getElementById('screenInner').innerHTML='';}
+
+function renderRecord(){
+  const keys=Object.keys(state.history);const live=Object.values(state.checks).filter(Boolean).length;
+  const full=keys.filter(k=>state.history[k].count===5&&k!==state.today).length+(live===5?1:0);
+  document.getElementById('stTotal').textContent=full;
+  document.getElementById('stBest').textContent=bestStreak();
+  document.getElementById('stYen').textContent=full*100;
+  document.getElementById('stCalc').textContent='Lv.'+state.calcLevel;
+  const now=new Date(),y=now.getFullYear(),m=now.getMonth();
+  const first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate();
+  const grid=document.getElementById('calGrid');grid.innerHTML='';
+  for(let i=0;i<first;i++)grid.appendChild(document.createElement('div'));
+  for(let dd=1;dd<=days;dd++){
+    const k=`${y}-${String(m+1).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+    const e=document.createElement('div');e.className='cd';e.textContent=dd;
+    let c=0;if(k===state.today)c=live;else if(state.history[k])c=state.history[k].count;
+    if(c===5)e.classList.add('win');else if(c>0)e.classList.add('part');
+    if(k===state.today)e.classList.add('today');
+    grid.appendChild(e);
+  }
+}
+function renderParent(){
+  const box=document.getElementById('logList');box.innerHTML='';
+  if(state.log.length===0){box.innerHTML='<div class="sec-sub" style="margin-top:20px;text-align:center">まだ記録はありません。音読・作文・理科社会をやると、ここに答えと講評が残ります。</div>';return;}
+  state.log.forEach(l=>{
+    const d=new Date(l.ts);const tstr=`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    const el=document.createElement('div');el.className='log-item';
+    el.innerHTML=`<div class="log-meta"><span class="log-tag">${l.tag}</span><span>${tstr}</span></div>
+      <div class="log-q">📌 ${l.question}</div>
+      <div class="log-a"><b style="color:#bff3cf">本人:</b> ${l.answer||'(なし)'}</div>
+      <div class="log-a" style="border-color:rgba(63,198,109,.4)"><b style="color:#7be29a">先生:</b> ${l.reply}</div>`;
+    box.appendChild(el);
+  });
+}
+
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('show'));
+    t.classList.add('active');
+    document.getElementById('panel-'+t.dataset.tab).classList.add('show');
+    if(t.dataset.tab==='record')renderRecord();
+    if(t.dataset.tab==='parent')renderParent();
+  });
+});
+
+let actx=null;
+function beep(freq,dur,type='sine',vol=.15){
+  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    const o=actx.createOscillator(),g=actx.createGain();o.type=type;o.frequency.value=freq;
+    o.connect(g);g.connect(actx.destination);g.gain.setValueAtTime(vol,actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+dur);o.start();o.stop(actx.currentTime+dur);}catch(e){}
+}
+function sparks(x,y,n,colors){
+  const b=document.getElementById('burst');
+  for(let i=0;i<n;i++){
+    const s=document.createElement('div');s.className='spark';s.style.background=colors[i%colors.length];
+    s.style.left=x+'px';s.style.top=y+'px';b.appendChild(s);
+    const ang=Math.random()*Math.PI*2,vel=60+Math.random()*120;
+    const dx=Math.cos(ang)*vel,dy=Math.sin(ang)*vel-40;
+    s.animate([{transform:'translate(0,0) rotate(0deg)',opacity:1},
+      {transform:`translate(${dx}px,${dy+160}px) rotate(${Math.random()*540}deg)`,opacity:0}],
+      {duration:900+Math.random()*500,easing:'cubic-bezier(.2,.6,.3,1)'}).onfinish=()=>s.remove();
+  }
+}
+function homerun(){
+  [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.18,'square',.12),i*110));
+  document.getElementById('bigWin').classList.add('show');
+  sparks(window.innerWidth/2,window.innerHeight/2,40,['#ffcf3f','#3fc66d','#7be29a','#fff','#f5a623']);
+  if(navigator.vibrate)navigator.vibrate([60,40,120]);
+}
+document.getElementById('bigWinClose').addEventListener('click',()=>document.getElementById('bigWin').classList.remove('show'));
+document.getElementById('resetBtn').addEventListener('click',async()=>{
+  if(confirm('今日のチェックを全部消します。よろしいですか？')){state.checks={};wasComplete=false;renderQuests();renderTop();await save();}
+});
+document.getElementById('resetAllBtn').addEventListener('click',async()=>{
+  if(confirm('すべての記録（連勝・カレンダー・先生メモ・計算レベル）を消します。元にもどせません。よろしいですか？')){
+    state={today:todayKey(),checks:{},history:{},calcLevel:1,calcStats:{correct:0,wrong:0},log:[]};
+    try{await window.storage.delete('kudan-state-v2');}catch(e){}
+    renderQuests();renderTop();alert('初期化しました');
+  }
+});
+
+(async()=>{await load();renderQuests();renderTop();wasComplete=Object.values(state.checks).filter(Boolean).length===5;})();
+</script>
+</body>
+</html>

@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>まいにち九段チャレンジ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Reddit+Sans:wght@400;600;800&display=swap');
+
+  :root{
+    --grass:#1f8f4e;
+    --grass-dark:#176b3b;
+    --grass-line:#2aa55e;
+    --dirt:#c8763c;
+    --dirt-dark:#a85f2c;
+    --sky:#0e1a2b;
+    --sky2:#16263d;
+    --gold:#ffcf3f;
+    --gold-deep:#f5a623;
+    --white:#fdfdf8;
+    --ink:#0e1a2b;
+    --hit:#3fc66d;
+    --miss:#2c3e52;
+    --line:rgba(255,255,255,.14);
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    font-family:'Reddit Sans','Hiragino Kaku Gothic ProN',sans-serif;
+    background:
+      radial-gradient(140% 90% at 50% -10%, var(--sky2) 0%, var(--sky) 55%, #0a1420 100%);
+    color:var(--white);
+    min-height:100%;
+    overflow-x:hidden;
+    user-select:none;
+  }
+
+  .wrap{max-width:480px;margin:0 auto;padding:18px 16px 120px;position:relative;}
+
+  /* ---- Header / scoreboard ---- */
+  .board{
+    background:linear-gradient(180deg,#11203a,#0c1830);
+    border:2px solid var(--line);
+    border-radius:18px;
+    padding:14px 16px 16px;
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .board::before{
+    content:"";position:absolute;inset:0;
+    background:repeating-linear-gradient(90deg,transparent 0 12px,rgba(255,255,255,.015) 12px 13px);
+    pointer-events:none;
+  }
+  .board-top{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .title{
+    font-family:'Mochiy Pop One',sans-serif;
+    font-size:18px;line-height:1.25;color:var(--gold);
+    text-shadow:0 2px 0 rgba(0,0,0,.35);
+    letter-spacing:.5px;
+  }
+  .date{font-size:11px;color:#9fb2c8;font-weight:600;margin-top:3px;letter-spacing:.5px;}
+
+  .streak{
+    text-align:center;background:rgba(255,207,63,.1);
+    border:1.5px solid rgba(255,207,63,.4);border-radius:14px;
+    padding:6px 12px;min-width:78px;flex-shrink:0;
+  }
+  .streak .num{font-family:'Mochiy Pop One',sans-serif;font-size:26px;color:var(--gold);line-height:1;}
+  .streak .lbl{font-size:9.5px;color:#d9c27a;font-weight:700;margin-top:2px;letter-spacing:.5px;}
+
+  /* progress count */
+  .count-row{display:flex;align-items:baseline;gap:8px;margin-top:14px;}
+  .count-big{font-family:'Mochiy Pop One',sans-serif;font-size:34px;color:var(--white);line-height:1;}
+  .count-sub{font-size:13px;color:#9fb2c8;font-weight:700;}
+  .reward-chip{
+    margin-left:auto;display:flex;align-items:center;gap:5px;
+    background:linear-gradient(180deg,var(--gold),var(--gold-deep));
+    color:#5a3d00;font-weight:800;font-size:13px;
+    padding:7px 12px;border-radius:999px;
+    box-shadow:0 4px 0 #c9881a, 0 6px 10px rgba(0,0,0,.3);
+    transition:transform .1s;
+  }
+  .reward-chip.locked{filter:grayscale(.7) brightness(.8);box-shadow:0 4px 0 #555,0 6px 10px rgba(0,0,0,.3);}
+
+  .bar{height:12px;background:rgba(0,0,0,.35);border-radius:99px;margin-top:12px;overflow:hidden;border:1px solid rgba(255,255,255,.08);}
+  .bar > i{display:block;height:100%;width:0;border-radius:99px;
+    background:linear-gradient(90deg,var(--hit),#7be29a);
+    transition:width .5s cubic-bezier(.2,.8,.2,1);}
+
+  /* ---- field of bases ---- */
+  .field{margin:22px auto 6px;width:240px;height:200px;position:relative;}
+  .diamond{
+    position:absolute;left:50%;top:54%;width:150px;height:150px;
+    transform:translate(-50%,-50%) rotate(45deg);
+    background:
+      linear-gradient(180deg,var(--grass-line),var(--grass) 60%,var(--grass-dark));
+    border:2px solid rgba(255,255,255,.18);border-radius:10px;
+    box-shadow:inset 0 0 30px rgba(0,0,0,.25);
+  }
+  .diamond::after{
+    content:"";position:absolute;inset:0;border-radius:10px;
+    background:repeating-linear-gradient(0deg,transparent 0 18px,rgba(255,255,255,.05) 18px 19px);
+  }
+
+  /* ---- quest list ---- */
+  .quests{margin-top:14px;display:flex;flex-direction:column;gap:11px;}
+  .quest{
+    display:flex;align-items:center;gap:13px;
+    background:linear-gradient(180deg,#15263f,#101e33);
+    border:2px solid var(--line);border-radius:16px;
+    padding:13px 14px;cursor:pointer;position:relative;
+    transition:transform .12s, border-color .2s, background .2s;
+  }
+  .quest:active{transform:scale(.98);}
+  .quest.done{
+    background:linear-gradient(180deg,rgba(63,198,109,.16),rgba(63,198,109,.06));
+    border-color:rgba(63,198,109,.55);
+  }
+  .qicon{
+    width:46px;height:46px;flex-shrink:0;border-radius:12px;
+    display:grid;place-items:center;font-size:24px;
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+  }
+  .quest.done .qicon{background:rgba(63,198,109,.22);border-color:rgba(63,198,109,.5);}
+  .qbody{flex:1;min-width:0;}
+  .qname{font-weight:800;font-size:15.5px;color:var(--white);letter-spacing:.2px;}
+  .qdesc{font-size:11.5px;color:#9fb2c8;font-weight:600;margin-top:2px;line-height:1.35;}
+  .quest.done .qname{color:#bff3cf;}
+  .check{
+    width:30px;height:30px;flex-shrink:0;border-radius:50%;
+    border:2.5px solid #3a4d66;display:grid;place-items:center;
+    transition:all .2s;
+  }
+  .check svg{width:16px;height:16px;opacity:0;transform:scale(.4);transition:all .25s cubic-bezier(.2,1.4,.4,1);}
+  .quest.done .check{background:var(--hit);border-color:var(--hit);box-shadow:0 0 14px rgba(63,198,109,.6);}
+  .quest.done .check svg{opacity:1;transform:scale(1);}
+
+  /* ---- win banner ---- */
+  .winbar{
+    margin-top:18px;text-align:center;border-radius:16px;padding:16px;
+    background:linear-gradient(180deg,rgba(255,207,63,.16),rgba(255,207,63,.04));
+    border:2px dashed rgba(255,207,63,.5);
+    opacity:.45;transition:opacity .4s;
+  }
+  .winbar.on{opacity:1;border-style:solid;animation:pop .5s;}
+  .winbar .wt{font-family:'Mochiy Pop One',sans-serif;font-size:17px;color:var(--gold);}
+  .winbar .ws{font-size:12px;color:#d9c27a;font-weight:700;margin-top:4px;}
+
+  /* ---- footer nav ---- */
+  .tabbar{
+    position:fixed;left:50%;bottom:14px;transform:translateX(-50%);
+    width:calc(100% - 32px);max-width:448px;
+    background:rgba(13,24,40,.92);backdrop-filter:blur(10px);
+    border:1.5px solid var(--line);border-radius:18px;
+    display:flex;padding:6px;gap:6px;z-index:30;
+    box-shadow:0 10px 30px rgba(0,0,0,.5);
+  }
+  .tab{
+    flex:1;text-align:center;padding:9px 4px;border-radius:13px;
+    font-size:11px;font-weight:800;color:#7e90a8;cursor:pointer;transition:all .2s;
+  }
+  .tab .ti{font-size:19px;display:block;margin-bottom:2px;}
+  .tab.active{color:var(--gold);background:rgba(255,207,63,.12);}
+
+  /* ---- panels ---- */
+  .panel{display:none;}
+  .panel.show{display:block;animation:fade .3s;}
+
+  /* calendar */
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:14px;}
+  .cal .cd{
+    aspect-ratio:1;border-radius:9px;display:grid;place-items:center;
+    font-size:12px;font-weight:700;background:#13233b;border:1px solid var(--line);
+    color:#7e90a8;position:relative;
+  }
+  .cal .cd.win{background:linear-gradient(180deg,var(--hit),#2ea556);color:#fff;border-color:transparent;}
+  .cal .cd.part{background:rgba(255,207,63,.18);color:var(--gold);border-color:rgba(255,207,63,.4);}
+  .cal .cd.today{outline:2px solid var(--gold);outline-offset:1px;}
+  .calhead{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:8px;}
+  .calhead span{text-align:center;font-size:10px;color:#7e90a8;font-weight:800;}
+
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:16px;}
+  .stat{background:linear-gradient(180deg,#15263f,#101e33);border:2px solid var(--line);border-radius:16px;padding:15px;text-align:center;}
+  .stat .sn{font-family:'Mochiy Pop One',sans-serif;font-size:30px;color:var(--gold);line-height:1;}
+  .stat .sl{font-size:11px;color:#9fb2c8;font-weight:700;margin-top:6px;}
+
+  .sec-title{font-family:'Mochiy Pop One',sans-serif;font-size:15px;color:var(--white);margin:24px 4px 2px;}
+  .sec-sub{font-size:11.5px;color:#9fb2c8;font-weight:600;margin:0 4px 4px;}
+
+  .roadmap{margin-top:14px;display:flex;flex-direction:column;gap:10px;}
+  .rm{background:linear-gradient(180deg,#15263f,#101e33);border:2px solid var(--line);border-radius:14px;padding:13px 14px;}
+  .rm .rmh{display:flex;align-items:center;gap:9px;font-weight:800;font-size:14.5px;}
+  .rm .rmh .e{font-size:19px;}
+  .rm .rmh .tag{margin-left:auto;font-size:9.5px;font-weight:800;padding:3px 8px;border-radius:99px;letter-spacing:.3px;}
+  .tag.top{background:rgba(245,166,35,.2);color:var(--gold);border:1px solid rgba(245,166,35,.4);}
+  .tag.keep{background:rgba(63,198,109,.18);color:#7be29a;border:1px solid rgba(63,198,109,.4);}
+  .rm ul{margin:9px 0 0;padding-left:18px;}
+  .rm li{font-size:12.5px;color:#c4d2e3;line-height:1.6;margin-bottom:3px;}
+
+  .reset{margin:26px auto 0;display:block;background:none;border:1px solid var(--line);color:#7e90a8;font-size:11px;font-weight:700;padding:8px 16px;border-radius:99px;cursor:pointer;}
+
+  /* burst */
+  .burst{position:fixed;inset:0;pointer-events:none;z-index:60;}
+  .spark{position:absolute;width:11px;height:11px;border-radius:2px;will-change:transform,opacity;}
+
+  .bigwin{
+    position:fixed;inset:0;z-index:70;display:none;place-items:center;
+    background:rgba(8,14,24,.82);backdrop-filter:blur(3px);
+  }
+  .bigwin.show{display:grid;animation:fade .3s;}
+  .bigwin-card{
+    text-align:center;padding:34px 30px;max-width:300px;
+    background:linear-gradient(180deg,#16273f,#0e1c30);
+    border:2.5px solid var(--gold);border-radius:24px;
+    box-shadow:0 0 50px rgba(255,207,63,.4);animation:pop .5s;
+  }
+  .bigwin .trophy{font-size:64px;animation:bounce 1s infinite;}
+  .bigwin h2{font-family:'Mochiy Pop One',sans-serif;color:var(--gold);font-size:24px;margin-top:8px;}
+  .bigwin p{font-size:13.5px;color:#d9c27a;font-weight:700;margin-top:8px;line-height:1.5;}
+  .bigwin .yen{font-family:'Mochiy Pop One',sans-serif;font-size:40px;color:var(--white);margin-top:12px;}
+  .bigwin button{margin-top:20px;background:linear-gradient(180deg,var(--gold),var(--gold-deep));border:none;color:#5a3d00;font-weight:800;font-size:15px;padding:12px 30px;border-radius:99px;cursor:pointer;box-shadow:0 4px 0 #c9881a;font-family:inherit;}
+
+  @keyframes pop{0%{transform:scale(.8);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== TODAY PANEL ===== -->
+  <div class="panel show" id="panel-today">
+    <div class="board">
+      <div class="board-top">
+        <div>
+          <div class="title">まいにち九段チャレンジ</div>
+          <div class="date" id="dateLabel">--</div>
+        </div>
+        <div class="streak">
+          <div class="num" id="streakNum">0</div>
+          <div class="lbl">れんしょう</div>
+        </div>
+      </div>
+
+      <div class="count-row">
+        <span class="count-big"><span id="doneNum">0</span><span style="font-size:18px;color:#9fb2c8">/5</span></span>
+        <span class="count-sub">クエストクリア</span>
+        <span class="reward-chip locked" id="rewardChip">💰 100円</span>
+      </div>
+      <div class="bar"><i id="barFill"></i></div>
+    </div>
+
+    <div class="field">
+      <div class="diamond"></div>
+    </div>
+
+    <div class="quests" id="questList"></div>
+
+    <div class="winbar" id="winBar">
+      <div class="wt">⚾ 今日はあと <span id="leftNum">5</span> つ！</div>
+      <div class="ws">ぜんぶクリアでホームラン → 100円ゲット</div>
+    </div>
+
+    <button class="reset" id="resetBtn">記録をリセット（保護者用）</button>
+  </div>
+
+  <!-- ===== RECORD PANEL ===== -->
+  <div class="panel" id="panel-record">
+    <div class="board">
+      <div class="board-top">
+        <div><div class="title">きろく</div><div class="date">これまでのがんばり</div></div>
+      </div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat"><div class="sn" id="stTotal">0</div><div class="sl">ホームランの日</div></div>
+      <div class="stat"><div class="sn" id="stBest">0</div><div class="sl">さいこう連勝</div></div>
+      <div class="stat"><div class="sn" id="stYen">0</div><div class="sl">ためた金額(円)</div></div>
+      <div class="stat"><div class="sn" id="stDuo">0</div><div class="sl">Duolingo日数</div></div>
+    </div>
+    <div class="sec-title">カレンダー</div>
+    <div class="sec-sub">緑=ぜんぶクリア / 黄=とちゅうまで</div>
+    <div class="calhead"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div>
+    <div class="cal" id="calGrid"></div>
+  </div>
+
+  <!-- ===== PLAN PANEL ===== -->
+  <div class="panel" id="panel-plan">
+    <div class="board">
+      <div class="board-top">
+        <div><div class="title">さくせん</div><div class="date">九段中をめざすロードマップ</div></div>
+      </div>
+    </div>
+
+    <div class="sec-title">5つのデイリークエスト</div>
+    <div class="sec-sub">毎日これをクリアすればOK。むりせず、まいにち続けるのがいちばん強い。</div>
+
+    <div class="roadmap">
+      <div class="rm">
+        <div class="rmh"><span class="e">🦉</span>Duolingo<span class="tag keep">毎日</span></div>
+        <ul><li>デイリークエストをぜんぶクリア</li><li>英語の感覚をキープ（準2級は実力で受ける）</li></ul>
+      </div>
+      <div class="rm">
+        <div class="rmh"><span class="e">🔢</span>計算<span class="tag top">最優先</span></div>
+        <ul><li>ひっ算・四則を1日10問、タイムをはかって</li><li>慣れたら「割合・速さ・比」へ（九段頻出）</li></ul>
+      </div>
+      <div class="rm">
+        <div class="rmh"><span class="e">📖</span>音読<span class="tag top">最優先</span></div>
+        <ul><li>10分。まずは好きな本・伝記・絵の多い読み物から</li><li>「結局どういう話？」を1文で言う練習へ</li></ul>
+      </div>
+      <div class="rm">
+        <div class="rmh"><span class="e">✍️</span>作文・読解</div>
+        <ul><li>AI先生と200字作文（今やっているのを継続）</li><li>短い文章を読んで一言で要約する</li></ul>
+      </div>
+      <div class="rm">
+        <div class="rmh"><span class="e">🔬</span>理科・社会のタネ</div>
+        <ul><li>子ども新聞やニュースを1つ「なぜ？」と考える</li><li>九段は資料を読む力が問われる（暗記は小5後半〜）</li></ul>
+      </div>
+    </div>
+
+    <div class="sec-title">九段中のしくみ（保護者メモ）</div>
+    <div class="sec-sub">報告書200＋適性1(国語)200＋適性2(資料)300＋適性3(理数)300＝1000点。<br>配点の6割が算数・理科・資料系。報告書は小4から入るので学校の成績も大事。</div>
+  </div>
+
+</div>
+
+<!-- tab bar -->
+<div class="tabbar">
+  <div class="tab active" data-tab="today"><span class="ti">⚾</span>きょう</div>
+  <div class="tab" data-tab="record"><span class="ti">📅</span>きろく</div>
+  <div class="tab" data-tab="plan"><span class="ti">🗺️</span>さくせん</div>
+</div>
+
+<div class="burst" id="burst"></div>
+
+<div class="bigwin" id="bigWin">
+  <div class="bigwin-card">
+    <div class="trophy">🏆</div>
+    <h2>ホームラン！</h2>
+    <p>今日のクエスト、ぜんぶクリア！<br>れんしょう記録ものびたよ</p>
+    <div class="yen">+100円</div>
+    <button id="bigWinClose">やったー！</button>
+  </div>
+</div>
+
+<script>
+const QUESTS=[
+  {id:'duo', icon:'🦉', name:'Duolingo', desc:'デイリークエストをクリア'},
+  {id:'calc',icon:'🔢', name:'計算',     desc:'ひっ算・四則を10問'},
+  {id:'read',icon:'📖', name:'音読',     desc:'10分よむ'},
+  {id:'write',icon:'✍️',name:'作文・読解',desc:'AI先生と200字 or 要約'},
+  {id:'sci', icon:'🔬', name:'理科社会のタネ',desc:'ニュースを1つ「なぜ？」'}
+];
+
+const WD=['日','月','火','水','木','金','土'];
+const todayKey=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
+
+let state={today:todayKey(), checks:{}, history:{}}; // history: {date:{count,quests}}
+
+// ---------- storage ----------
+async function load(){
+  try{
+    const r=await window.storage.get('kudan-state');
+    if(r&&r.value){const s=JSON.parse(r.value);
+      state.history=s.history||{};
+      if(s.today===todayKey()){state.today=s.today;state.checks=s.checks||{};}
+      else{state.today=todayKey();state.checks={};}
+    }
+  }catch(e){state.history={};state.checks={};}
+}
+async function save(){
+  // fold today into history
+  const done=Object.values(state.checks).filter(Boolean).length;
+  state.history[state.today]={count:done, quests:{...state.checks}};
+  try{await window.storage.set('kudan-state', JSON.stringify({today:state.today,checks:state.checks,history:state.history}));}catch(e){}
+}
+
+// ---------- streak calc ----------
+function calcStreak(){
+  // count consecutive full-clear days ending today (or yesterday if today not yet done)
+  let streak=0; const d=new Date();
+  for(let i=0;i<400;i++){
+    const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const h=state.history[k];
+    const full = k===state.today ? (Object.values(state.checks).filter(Boolean).length===5) : (h&&h.count===5);
+    if(full){streak++;}
+    else if(k===state.today){/* today not done yet, keep looking back */}
+    else{break;}
+    d.setDate(d.getDate()-1);
+  }
+  return streak;
+}
+function bestStreak(){
+  const keys=Object.keys(state.history).filter(k=>state.history[k].count===5).sort();
+  // include today
+  const allFull={};keys.forEach(k=>allFull[k]=true);
+  if(Object.values(state.checks).filter(Boolean).length===5)allFull[state.today]=true;
+  const sorted=Object.keys(allFull).sort();
+  let best=0,cur=0,prev=null;
+  for(const k of sorted){
+    if(prev){const pd=new Date(prev);pd.setDate(pd.getDate()+1);
+      const nk=`${pd.getFullYear()}-${String(pd.getMonth()+1).padStart(2,'0')}-${String(pd.getDate()).padStart(2,'0')}`;
+      cur = nk===k ? cur+1 : 1;
+    }else cur=1;
+    best=Math.max(best,cur);prev=k;
+  }
+  return best;
+}
+
+// ---------- render ----------
+function renderQuests(){
+  const list=document.getElementById('questList');
+  list.innerHTML='';
+  QUESTS.forEach(q=>{
+    const done=!!state.checks[q.id];
+    const el=document.createElement('div');
+    el.className='quest'+(done?' done':'');
+    el.innerHTML=`
+      <div class="qicon">${q.icon}</div>
+      <div class="qbody"><div class="qname">${q.name}</div><div class="qdesc">${q.desc}</div></div>
+      <div class="check"><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
+    el.addEventListener('click',()=>toggle(q.id,el));
+    list.appendChild(el);
+  });
+}
+function renderTop(){
+  const done=Object.values(state.checks).filter(Boolean).length;
+  document.getElementById('doneNum').textContent=done;
+  document.getElementById('barFill').style.width=(done/5*100)+'%';
+  document.getElementById('streakNum').textContent=calcStreak();
+  const d=new Date();document.getElementById('dateLabel').textContent=`${d.getMonth()+1}月${d.getDate()}日(${WD[d.getDay()]})`;
+  const chip=document.getElementById('rewardChip');
+  const wb=document.getElementById('winBar');
+  const left=5-done;
+  if(done===5){chip.classList.remove('locked');wb.classList.add('on');
+    wb.querySelector('.wt').innerHTML='🎉 ぜんぶクリア！ホームラン！';
+    wb.querySelector('.ws').textContent='今日のごほうび 100円ゲット！';}
+  else{chip.classList.add('locked');wb.classList.remove('on');
+    document.getElementById('leftNum').textContent=left;
+    wb.querySelector('.wt').innerHTML=`⚾ 今日はあと <span id="leftNum">${left}</span> つ！`;
+    wb.querySelector('.ws').textContent='ぜんぶクリアでホームラン → 100円ゲット';}
+}
+
+let wasComplete=false;
+function toggle(id,el){
+  state.checks[id]=!state.checks[id];
+  if(state.checks[id]) hit(el);
+  renderTop();save();
+  const done=Object.values(state.checks).filter(Boolean).length;
+  if(done===5 && !wasComplete){wasComplete=true;homerun();}
+  if(done<5)wasComplete=false;
+}
+
+// ---------- effects ----------
+let actx=null;
+function beep(freq,dur,type='sine',vol=.15){
+  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type;o.frequency.value=freq;o.connect(g);g.connect(actx.destination);
+    g.gain.setValueAtTime(vol,actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+dur);
+    o.start();o.stop(actx.currentTime+dur);
+  }catch(e){}
+}
+function hit(el){
+  beep(680,.12,'triangle');setTimeout(()=>beep(900,.12,'triangle'),90);
+  const r=el.getBoundingClientRect();
+  sparks(r.left+r.width-30, r.top+r.height/2, 8, ['#3fc66d','#7be29a','#ffcf3f']);
+}
+function homerun(){
+  [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.18,'square',.12),i*110));
+  const bw=document.getElementById('bigWin');bw.classList.add('show');
+  sparks(window.innerWidth/2,window.innerHeight/2,40,['#ffcf3f','#3fc66d','#7be29a','#fff','#f5a623']);
+  if(navigator.vibrate)navigator.vibrate([60,40,120]);
+}
+function sparks(x,y,n,colors){
+  const b=document.getElementById('burst');
+  for(let i=0;i<n;i++){
+    const s=document.createElement('div');s.className='spark';
+    s.style.background=colors[i%colors.length];s.style.left=x+'px';s.style.top=y+'px';
+    b.appendChild(s);
+    const ang=Math.random()*Math.PI*2, vel=60+Math.random()*120;
+    const dx=Math.cos(ang)*vel, dy=Math.sin(ang)*vel-40;
+    s.animate([{transform:'translate(0,0) rotate(0deg)',opacity:1},
+      {transform:`translate(${dx}px,${dy+160}px) rotate(${Math.random()*540}deg)`,opacity:0}],
+      {duration:900+Math.random()*500,easing:'cubic-bezier(.2,.6,.3,1)'}).onfinish=()=>s.remove();
+  }
+}
+
+// ---------- record panel ----------
+function renderRecord(){
+  const keys=Object.keys(state.history);
+  // include live today
+  const liveCount=Object.values(state.checks).filter(Boolean).length;
+  const histFull=keys.filter(k=>state.history[k].count===5 && k!==state.today).length
+    + (liveCount===5?1:0);
+  document.getElementById('stTotal').textContent=histFull;
+  document.getElementById('stBest').textContent=bestStreak();
+  document.getElementById('stYen').textContent=histFull*100;
+  const duoDays=keys.filter(k=> (k!==state.today && state.history[k].quests&&state.history[k].quests.duo)).length
+    + (state.checks.duo?1:0);
+  document.getElementById('stDuo').textContent=duoDays;
+
+  // calendar (current month)
+  const now=new Date();const y=now.getFullYear(),m=now.getMonth();
+  const first=new Date(y,m,1).getDay();const days=new Date(y,m+1,0).getDate();
+  const grid=document.getElementById('calGrid');grid.innerHTML='';
+  for(let i=0;i<first;i++){const e=document.createElement('div');grid.appendChild(e);}
+  for(let dd=1;dd<=days;dd++){
+    const k=`${y}-${String(m+1).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+    const e=document.createElement('div');e.className='cd';e.textContent=dd;
+    let c=0;
+    if(k===state.today)c=liveCount;
+    else if(state.history[k])c=state.history[k].count;
+    if(c===5)e.classList.add('win');
+    else if(c>0)e.classList.add('part');
+    if(k===state.today)e.classList.add('today');
+    grid.appendChild(e);
+  }
+}
+
+// ---------- tabs ----------
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('show'));
+    t.classList.add('active');
+    document.getElementById('panel-'+t.dataset.tab).classList.add('show');
+    if(t.dataset.tab==='record')renderRecord();
+  });
+});
+
+document.getElementById('bigWinClose').addEventListener('click',()=>document.getElementById('bigWin').classList.remove('show'));
+document.getElementById('resetBtn').addEventListener('click',async()=>{
+  if(confirm('今日のチェックを全部消します。よろしいですか？')){
+    state.checks={};wasComplete=false;renderQuests();renderTop();await save();
+  }
+});
+
+// ---------- init ----------
+(async()=>{
+  await load();
+  renderQuests();renderTop();
+  wasComplete=Object.values(state.checks).filter(Boolean).length===5;
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>まいにち九段ベースボール</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Reddit+Sans:wght@400;600;800&display=swap');
+  :root{
+    --bg:#faf3e4;--bg2:#f3e9d6;--ink:#1c2c44;--ink2:#3f5169;--muted:#7c8a9e;
+    --card:#fffdf7;--card2:#fff8ea;--line:rgba(28,44,68,.13);--line2:rgba(28,44,68,.08);
+    --gold:#d4860a;--gold-deep:#bb750a;--gold-btn:#ffcf3f;--gold-btn2:#f5a623;
+    --hit:#2ea556;--hit-light:#39b865;--hit-bg:#e7f6ec;--red:#dd5049;--red-bg:#fdeceb;
+    --grass:#2e9e5b;
+    --rN:#7d8da3;--rR:#2a9fd6;--rSR:#8259e6;--rSS:#d49a10;--rLG:#e0554a;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:'Reddit Sans','Hiragino Kaku Gothic ProN',sans-serif;
+    background:radial-gradient(135% 90% at 50% -8%,#fdf8ec 0%,var(--bg) 50%,var(--bg2) 100%);
+    color:var(--ink);min-height:100%;overflow-x:hidden;-webkit-text-size-adjust:100%;}
+  .wrap{max-width:480px;margin:0 auto;padding:18px 14px 120px;position:relative;}
+
+  .board{background:#fff;border:1.5px solid var(--line);border-radius:18px;padding:14px 16px 16px;position:relative;overflow:hidden;box-shadow:0 6px 20px rgba(28,44,68,.08);}
+  .board-top{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .title{font-family:'Mochiy Pop One',sans-serif;font-size:17px;line-height:1.25;color:var(--grass);letter-spacing:.3px;}
+  .date{font-size:11px;color:var(--muted);font-weight:700;margin-top:3px;letter-spacing:.3px;}
+  .streak{text-align:center;background:var(--red-bg);border:1.5px solid rgba(221,80,73,.3);border-radius:14px;padding:6px 12px;min-width:74px;flex-shrink:0;}
+  .streak .num{font-family:'Mochiy Pop One',sans-serif;font-size:24px;color:var(--red);line-height:1;}
+  .streak .lbl{font-size:9px;color:#c0524c;font-weight:800;margin-top:2px;letter-spacing:.2px;}
+  .count-row{display:flex;align-items:baseline;gap:8px;margin-top:14px;}
+  .count-big{font-family:'Mochiy Pop One',sans-serif;font-size:34px;color:var(--ink);line-height:1;}
+  .count-sub{font-size:13px;color:var(--ink2);font-weight:700;}
+  .coin-chip{margin-left:auto;display:flex;align-items:center;gap:5px;background:linear-gradient(180deg,var(--gold-btn),var(--gold-btn2));color:#5a3d00;font-weight:800;font-size:14px;padding:7px 13px;border-radius:999px;box-shadow:0 3px 0 #d89417;}
+  .bar{height:13px;background:#eadfc8;border-radius:99px;margin-top:12px;overflow:hidden;border:1px solid var(--line2);}
+  .bar>i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--hit),var(--hit-light));transition:width .5s cubic-bezier(.2,.8,.2,1);}
+
+  .quests{margin-top:16px;display:flex;flex-direction:column;gap:11px;}
+  .quest{display:flex;align-items:center;gap:13px;background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:13px 14px;cursor:pointer;position:relative;transition:transform .12s,border-color .2s,background .2s;box-shadow:0 3px 10px rgba(28,44,68,.05);}
+  .quest:active{transform:scale(.98);}
+  .quest.done{background:var(--hit-bg);border-color:rgba(46,165,86,.4);}
+  .qicon{width:46px;height:46px;flex-shrink:0;border-radius:12px;display:grid;place-items:center;font-size:24px;background:#f3ecdb;border:1px solid var(--line2);}
+  .quest.done .qicon{background:#d6f0de;border-color:rgba(46,165,86,.3);}
+  .qbody{flex:1;min-width:0;}
+  .qname{font-weight:800;font-size:15.5px;color:var(--ink);letter-spacing:.2px;}
+  .qdesc{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:2px;line-height:1.35;}
+  .quest.done .qname{color:#1e7a44;}
+  .qgo{font-size:11px;font-weight:800;color:#fff;background:var(--grass);border:1px solid var(--grass);padding:6px 12px;border-radius:99px;flex-shrink:0;}
+  .check{width:30px;height:30px;flex-shrink:0;border-radius:50%;border:2.5px solid #cdd6e0;display:grid;place-items:center;transition:all .2s;}
+  .check svg{width:16px;height:16px;opacity:0;transform:scale(.4);transition:all .25s cubic-bezier(.2,1.4,.4,1);}
+  .quest.done .check{background:var(--hit);border-color:var(--hit);box-shadow:0 0 10px rgba(46,165,86,.4);}
+  .quest.done .check svg{opacity:1;transform:scale(1);}
+
+  .gachabar{margin-top:18px;text-align:center;border-radius:18px;padding:18px;background:linear-gradient(180deg,#fff4dc,#ffeccb);border:2px dashed rgba(212,134,10,.45);opacity:.7;transition:opacity .4s;}
+  .gachabar.on{opacity:1;border-style:solid;border-color:var(--gold-btn2);box-shadow:0 4px 20px rgba(245,166,35,.22);cursor:pointer;animation:gachapulse 1.6s infinite;}
+  .gachabar .gt{font-family:'Mochiy Pop One',sans-serif;font-size:16px;color:var(--gold-deep);}
+  .gachabar .gs{font-size:12px;color:#9a7320;font-weight:700;margin-top:5px;line-height:1.4;}
+  .gachabar .gs b{color:var(--gold-deep);}
+  .gachabar.done{opacity:.95;border-style:solid;border-color:rgba(46,165,86,.45);background:var(--hit-bg);animation:none;cursor:default;}
+  .gachabar.done .gt{color:#1e7a44;}
+  .gachabar.done .gs{color:#2c7a4c;}
+  @keyframes gachapulse{0%,100%{box-shadow:0 4px 14px rgba(245,166,35,.18);}50%{box-shadow:0 4px 28px rgba(245,166,35,.4);}}
+
+  .tabbar{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);width:calc(100% - 24px);max-width:456px;background:rgba(255,253,247,.96);backdrop-filter:blur(10px);border:1.5px solid var(--line);border-radius:18px;display:flex;padding:6px 4px;gap:2px;z-index:30;box-shadow:0 6px 22px rgba(28,44,68,.14);}
+  .tab{flex:1;text-align:center;padding:8px 1px;border-radius:12px;font-size:10px;font-weight:800;color:var(--muted);cursor:pointer;transition:all .2s;}
+  .tab .ti{font-size:17px;display:block;margin-bottom:2px;}
+  .tab.active{color:var(--gold-deep);background:#fff2d6;}
+
+  .panel{display:none;}
+  .panel.show{display:block;animation:fade .3s;}
+
+  .sec-title{font-family:'Mochiy Pop One',sans-serif;font-size:15px;color:var(--ink);margin:24px 4px 2px;}
+  .sec-sub{font-size:11.5px;color:var(--muted);font-weight:600;margin:0 4px 4px;line-height:1.5;}
+
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:16px;}
+  .stat{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:15px;text-align:center;box-shadow:0 3px 10px rgba(28,44,68,.05);}
+  .stat .sn{font-family:'Mochiy Pop One',sans-serif;font-size:26px;color:var(--gold-deep);line-height:1.05;}
+  .stat .sl{font-size:11px;color:var(--muted);font-weight:700;margin-top:6px;}
+  .calhead{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:8px;}
+  .calhead span{text-align:center;font-size:10px;color:var(--muted);font-weight:800;}
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:6px;}
+  .cal .cd{aspect-ratio:1;border-radius:9px;display:grid;place-items:center;font-size:12px;font-weight:700;background:#f3ecdb;border:1px solid var(--line2);color:var(--muted);}
+  .cal .cd.win{background:linear-gradient(180deg,var(--hit-light),var(--hit));color:#fff;border-color:transparent;}
+  .cal .cd.part{background:#fdebc4;color:var(--gold-deep);border-color:rgba(212,134,10,.3);}
+  .cal .cd.today{outline:2px solid var(--gold-btn2);outline-offset:1px;}
+
+  .coll-head{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:14px 16px;margin-top:16px;text-align:center;box-shadow:0 3px 10px rgba(28,44,68,.05);}
+  .coll-head .ch-n{font-family:'Mochiy Pop One',sans-serif;font-size:30px;color:var(--gold-deep);}
+  .coll-head .ch-l{font-size:12px;color:var(--muted);font-weight:700;margin-top:2px;}
+  .coll-bar{height:10px;background:#eadfc8;border-radius:99px;margin-top:10px;overflow:hidden;}
+  .coll-bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--gold-btn),var(--gold-btn2));border-radius:99px;transition:width .5s;}
+  .rar-group{margin-top:18px;}
+  .rar-label{font-size:12px;font-weight:800;letter-spacing:.5px;margin:0 4px 8px;display:flex;align-items:center;gap:6px;}
+  .card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
+  .pcard{aspect-ratio:.72;border-radius:12px;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 5px;border:1.5px solid var(--line);background:#fff;text-align:center;box-shadow:0 2px 8px rgba(28,44,68,.06);}
+  .pcard.locked{opacity:.9;background:#f1ebde;}
+  .pcard .pe{font-size:30px;line-height:1;}
+  .pcard .pn{font-size:9.5px;font-weight:800;margin-top:5px;line-height:1.2;color:var(--ink);}
+  .pcard .pp{font-size:8px;font-weight:700;color:var(--muted);margin-top:2px;}
+  .pcard .pcount{position:absolute;top:4px;right:5px;font-size:9px;font-weight:800;background:var(--ink);padding:1px 6px;border-radius:99px;color:#fff;}
+  .pcard .plock{font-size:24px;color:#c2ccd8;}
+  .pcard .pstars{font-size:8px;margin-top:3px;letter-spacing:-1px;}
+
+  .screen{position:fixed;inset:0;z-index:50;background:radial-gradient(135% 90% at 50% -8%,#fdf8ec 0%,var(--bg) 55%,var(--bg2) 100%);display:none;flex-direction:column;}
+  .screen.show{display:flex;animation:slideup .3s;}
+  .scr-head{display:flex;align-items:center;gap:12px;padding:16px 16px 12px;border-bottom:1.5px solid var(--line);background:rgba(255,253,247,.9);}
+  .scr-head .x{width:38px;height:38px;border-radius:11px;background:#f3ecdb;border:1px solid var(--line);display:grid;place-items:center;font-size:20px;cursor:pointer;flex-shrink:0;color:var(--ink2);}
+  .scr-head .ht{font-family:'Mochiy Pop One',sans-serif;font-size:16px;color:var(--ink);}
+  .scr-head .hs{font-size:11px;color:var(--muted);font-weight:600;margin-top:1px;}
+  .scr-body{flex:1;overflow-y:auto;padding:16px;max-width:480px;margin:0 auto;width:100%;}
+  .scr-foot{padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1.5px solid var(--line);max-width:480px;margin:0 auto;width:100%;background:rgba(255,253,247,.9);}
+
+  .lvl-pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:var(--gold-deep);background:#fdebc4;border:1px solid rgba(212,134,10,.35);padding:5px 11px;border-radius:99px;white-space:nowrap;}
+  .theme-tag{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;color:#1e7a44;background:var(--hit-bg);border:1px solid rgba(46,165,86,.35);padding:5px 12px;border-radius:99px;margin-bottom:12px;}
+
+  .calc-card{background:#fff;border:1.5px solid var(--line);border-radius:20px;padding:26px 20px;text-align:center;margin-top:8px;box-shadow:0 4px 14px rgba(28,44,68,.07);}
+  .calc-type{font-size:12px;font-weight:800;color:var(--muted);margin-bottom:10px;letter-spacing:.5px;}
+  .calc-q{font-family:'Mochiy Pop One',sans-serif;font-size:38px;letter-spacing:1px;color:var(--ink);line-height:1.2;}
+  .calc-input{margin-top:20px;width:100%;font-size:34px;text-align:center;font-family:'Mochiy Pop One',sans-serif;background:#fffdf7;border:2px solid var(--line);border-radius:14px;color:var(--gold-deep);padding:12px;outline:none;}
+  .calc-input:focus{border-color:var(--gold-btn2);}
+  .calc-progress{display:flex;justify-content:center;gap:6px;margin-top:16px;}
+  .pip{width:13px;height:13px;border-radius:50%;background:#dde3ea;border:1px solid var(--line);}
+  .pip.ok{background:var(--hit);border-color:var(--hit);}
+  .pip.ng{background:var(--red);border-color:var(--red);}
+  .feedback{min-height:24px;margin-top:14px;font-weight:800;font-size:15px;}
+  .feedback.good{color:var(--hit);}
+  .feedback.bad{color:#e0762b;}
+  .hintbox{background:#fdf3da;border:1px solid rgba(212,134,10,.3);border-radius:12px;padding:12px 14px;margin-top:14px;font-size:13px;line-height:1.6;color:#7d5e15;text-align:left;display:none;}
+  .hintbox.show{display:block;animation:fade .3s;}
+
+  .btn{display:block;width:100%;border:none;border-radius:14px;font-family:inherit;font-weight:800;font-size:16px;padding:15px;cursor:pointer;transition:transform .1s;}
+  .btn:active{transform:scale(.98);}
+  .btn:disabled{opacity:.55;}
+  .btn-gold{background:linear-gradient(180deg,var(--gold-btn),var(--gold-btn2));color:#5a3d00;box-shadow:0 4px 0 #d89417;}
+  .btn-ghost{background:#f3ecdb;color:var(--ink2);border:1px solid var(--line);}
+  .btn-green{background:linear-gradient(180deg,var(--hit-light),var(--hit));color:#fff;box-shadow:0 4px 0 #1f8048;}
+  .btn-sm{padding:11px;font-size:14px;}
+
+  .themes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+  .theme-chip{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:18px 12px;text-align:center;cursor:pointer;transition:all .15s;}
+  .theme-chip:active{transform:scale(.97);}
+  .theme-chip .te{font-size:32px;}
+  .theme-chip .tn{font-size:13px;font-weight:800;margin-top:6px;color:var(--ink);}
+
+  .ai-card{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:18px;margin-top:14px;box-shadow:0 3px 12px rgba(28,44,68,.06);}
+  .ai-story{font-size:18px;line-height:2.25;color:var(--ink);font-weight:600;}
+  .ai-story rt{font-size:10px;color:var(--muted);font-weight:600;}
+  .ai-label{font-size:11px;font-weight:800;color:var(--gold-deep);letter-spacing:.5px;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+  .q-item{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:13px;margin-top:10px;}
+  .q-item .qq{font-weight:800;font-size:14px;color:var(--ink);line-height:1.5;}
+  .answer-area{width:100%;margin-top:10px;background:#fffdf7;border:2px solid var(--line);border-radius:12px;color:var(--ink);padding:12px;font-family:inherit;font-size:15px;line-height:1.6;resize:vertical;min-height:64px;outline:none;}
+  .answer-area:focus{border-color:var(--gold-btn2);}
+  .char-count{text-align:right;font-size:11px;color:var(--muted);font-weight:700;margin-top:4px;}
+  .char-count.warn{color:var(--gold-deep);}
+
+  .aozora-list{margin-top:12px;display:flex;flex-direction:column;gap:8px;}
+  .aozora-item{display:flex;align-items:center;gap:11px;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:11px 13px;text-decoration:none;color:inherit;transition:all .15s;}
+  .aozora-item:active{transform:scale(.98);background:#fbf2dd;}
+  .aozora-item .ae{font-size:22px;flex-shrink:0;}
+  .aozora-item .at{flex:1;min-width:0;}
+  .aozora-item .atn{font-weight:800;font-size:14px;color:var(--ink);}
+  .aozora-item .atm{font-size:11px;color:var(--muted);font-weight:600;margin-top:1px;}
+  .aozora-item .arrow{font-size:14px;color:var(--muted);flex-shrink:0;}
+
+  .tmpl-box{font-size:16px;line-height:2.3;color:var(--ink);font-weight:600;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:6px;}
+  .tmpl-blank{display:inline-block;min-width:60px;border-bottom:2px solid var(--gold-btn2);color:var(--gold-deep);font-weight:800;text-align:center;padding:0 6px;}
+  .tmpl-blank.filled{color:#1e7a44;border-color:var(--hit);}
+  .blank-input{margin-top:10px;}
+  .blank-input label{display:block;font-size:12.5px;font-weight:800;color:var(--gold-deep);margin-bottom:4px;}
+  .blank-input .bhint{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:5px;}
+  .blank-input input{width:100%;background:#fffdf7;border:2px solid var(--line);border-radius:10px;color:var(--ink);padding:11px;font-family:inherit;font-size:15px;outline:none;}
+  .blank-input input:focus{border-color:var(--gold-btn2);}
+  .preview{background:#fdf3da;border:1px dashed rgba(212,134,10,.4);border-radius:12px;padding:14px;margin-top:14px;font-size:15px;line-height:2;color:var(--ink);font-weight:600;}
+  .preview .pl{font-size:11px;font-weight:800;color:var(--gold-deep);letter-spacing:.5px;margin-bottom:8px;display:block;}
+
+  .sensei-reply{background:var(--hit-bg);border:1.5px solid rgba(46,165,86,.35);border-radius:16px;padding:16px;margin-top:14px;}
+  .sensei-reply .sr-head{display:flex;align-items:center;gap:8px;font-weight:800;color:#1e7a44;font-size:13px;margin-bottom:8px;}
+  .sensei-reply .sr-body{font-size:14.5px;line-height:1.75;color:#234a32;white-space:pre-wrap;}
+
+  .gemini-box{background:linear-gradient(180deg,#eef4ff,#e4edff);border:2px solid #b9cdf5;border-radius:16px;padding:16px;margin-top:14px;}
+  .gemini-box .gb-head{font-weight:800;color:#3a5bb8;font-size:15px;display:flex;align-items:center;gap:7px;margin-bottom:4px;}
+  .gemini-box .gb-sub{font-size:12px;color:#5a6b90;font-weight:700;line-height:1.5;margin-bottom:12px;}
+  .gemini-steps{display:flex;gap:6px;margin-bottom:12px;}
+  .gemini-steps .gstep{flex:1;text-align:center;font-size:10.5px;font-weight:800;color:#3a5bb8;background:#fff;border:1px solid #cdd9f0;border-radius:9px;padding:8px 3px;line-height:1.3;}
+  .gemini-prompt{width:100%;background:#fff;border:1.5px solid #cdd9f0;border-radius:10px;color:#1c2c44;padding:11px;font-family:inherit;font-size:12.5px;line-height:1.6;resize:vertical;min-height:88px;outline:none;}
+  .btn-copy{background:#fff;border:2px solid #5b7fd4;color:#2f4f9e;}
+  .btn-gemini{background:linear-gradient(180deg,#5b8def,#466fd6);color:#fff;box-shadow:0 4px 0 #3a5bbd;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:7px;}
+  .copied-note{font-size:12.5px;font-weight:800;color:#1e7a44;text-align:center;margin-top:8px;min-height:18px;}
+  .after-gemini{font-size:11.5px;font-weight:800;color:#7c8a9e;margin:18px 4px 0;text-align:center;}
+
+  .choice-btn{display:flex;flex-direction:column;width:100%;text-align:left;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:13px;margin-top:10px;cursor:pointer;font-family:inherit;transition:all .15s;box-shadow:0 2px 8px rgba(28,44,68,.05);}
+  .choice-btn:active{transform:scale(.99);}
+  .choice-btn:disabled{cursor:default;}
+  .choice-row{display:flex;align-items:flex-start;gap:11px;}
+  .choice-mark{flex-shrink:0;width:27px;height:27px;border-radius:8px;background:#f3ecdb;color:var(--ink2);font-weight:800;font-size:14px;display:grid;place-items:center;}
+  .choice-text{font-size:14.5px;font-weight:700;color:var(--ink);line-height:1.5;padding-top:3px;}
+  .choice-btn.selected{border-color:var(--gold-btn2);background:#fdf3da;}
+  .choice-btn.selected .choice-mark{background:var(--gold-btn2);color:#fff;}
+  .choice-btn.correct{border-color:var(--hit);background:var(--hit-bg);}
+  .choice-btn.correct .choice-mark{background:var(--hit);color:#fff;}
+  .choice-btn.wrong{opacity:.62;}
+  .choice-btn.chosen-outline{box-shadow:0 0 0 2.5px rgba(28,44,68,.4);}
+  .choice-comment{font-size:12px;font-weight:700;color:var(--ink2);margin-top:8px;line-height:1.55;padding-left:38px;}
+  .choice-btn.correct .choice-comment{color:#1e7a44;}
+
+  .loading{text-align:center;padding:40px 16px;color:var(--muted);font-weight:700;font-size:14px;}
+  .loading .dots{display:inline-block;animation:blink 1.2s infinite;}
+  .spinner{width:42px;height:42px;border:4px solid rgba(28,44,68,.12);border-top-color:var(--gold-btn2);border-radius:50%;margin:0 auto 16px;animation:spin 1s linear infinite;}
+
+  .log-item{background:var(--card);border:1.5px solid var(--line);border-radius:13px;padding:13px;margin-top:10px;box-shadow:0 2px 8px rgba(28,44,68,.05);}
+  .log-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px;}
+  .log-tag{font-size:10px;font-weight:800;padding:2px 8px;border-radius:99px;background:#fdebc4;color:var(--gold-deep);}
+  .log-q{font-size:12.5px;color:var(--ink2);font-weight:700;line-height:1.5;}
+  .log-a{font-size:13.5px;color:var(--ink);line-height:1.6;margin-top:5px;padding-left:10px;border-left:2px solid var(--line);}
+
+  .roadmap{margin-top:14px;display:flex;flex-direction:column;gap:10px;}
+  .rm{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:13px 14px;box-shadow:0 2px 8px rgba(28,44,68,.05);}
+  .rm .rmh{display:flex;align-items:center;gap:9px;font-weight:800;font-size:14.5px;color:var(--ink);}
+  .rm .rmh .e{font-size:19px;}
+  .rm .rmh .tag{margin-left:auto;font-size:9.5px;font-weight:800;padding:3px 8px;border-radius:99px;letter-spacing:.3px;}
+  .tag.top{background:#fdebc4;color:var(--gold-deep);border:1px solid rgba(212,134,10,.35);}
+  .tag.keep{background:var(--hit-bg);color:#1e7a44;border:1px solid rgba(46,165,86,.35);}
+  .rm ul{margin:9px 0 0;padding-left:18px;}
+  .rm li{font-size:12.5px;color:var(--ink2);line-height:1.6;margin-bottom:3px;}
+
+  .reset{margin:22px auto 0;display:block;background:none;border:1px solid var(--line);color:var(--muted);font-size:11px;font-weight:700;padding:8px 16px;border-radius:99px;cursor:pointer;}
+
+  .burst{position:fixed;inset:0;pointer-events:none;z-index:90;}
+  .spark{position:absolute;width:11px;height:11px;border-radius:2px;will-change:transform,opacity;}
+
+  .gacha{position:fixed;inset:0;z-index:80;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:radial-gradient(120% 80% at 50% 25%,#fff6e0 0%,#f6ecd8 65%,#efe3cd 100%);text-align:center;overflow:hidden;}
+  .gacha.show{display:flex;animation:fade .3s;}
+  .gacha-step{width:100%;max-width:340px;display:flex;flex-direction:column;align-items:center;}
+  .gacha-h{font-family:'Mochiy Pop One',sans-serif;font-size:20px;color:var(--gold-deep);margin-bottom:6px;}
+  .gacha-sub{font-size:13px;color:var(--ink2);font-weight:700;margin-bottom:22px;line-height:1.5;}
+
+  .pack{width:160px;height:210px;border-radius:18px;cursor:pointer;position:relative;background:linear-gradient(145deg,#fff,#fdf3da);border:3px solid var(--gold-btn2);display:grid;place-items:center;box-shadow:0 12px 36px rgba(212,134,10,.28),inset 0 2px 10px rgba(255,255,255,.6);animation:packfloat 2.2s ease-in-out infinite;}
+  .pack:active{transform:scale(.96);}
+  .pack .pball{font-size:74px;animation:packspin 3s linear infinite;}
+  .pack .ptap{position:absolute;bottom:14px;font-size:12px;font-weight:800;color:#fff;background:var(--gold-btn2);padding:5px 14px;border-radius:99px;box-shadow:0 2px 6px rgba(212,134,10,.3);}
+  @keyframes packfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  @keyframes packspin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+
+  .reveal-card{width:200px;height:280px;border-radius:18px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;border:3px solid var(--gold-btn2);background:#fff;box-shadow:0 0 50px var(--cardglow,rgba(245,166,35,.5)),0 10px 30px rgba(28,44,68,.18);animation:cardpop .6s cubic-bezier(.2,1.4,.4,1);overflow:hidden;}
+  .reveal-card::before{content:'';position:absolute;inset:0;background:linear-gradient(145deg,var(--cardbg1,#fff4dc),var(--cardbg2,#ffe8c0));opacity:.55;z-index:0;}
+  .reveal-card>*{position:relative;z-index:1;}
+  .reveal-card .rc-rar{font-size:13px;font-weight:800;letter-spacing:1px;color:var(--cardcolor,#333);}
+  .reveal-card .rc-stars{font-size:18px;margin:4px 0 12px;letter-spacing:-1px;}
+  .reveal-card .rc-e{font-size:80px;line-height:1;filter:drop-shadow(0 4px 8px rgba(28,44,68,.25));}
+  .reveal-card .rc-n{font-family:'Mochiy Pop One',sans-serif;font-size:16px;margin-top:14px;color:var(--ink);line-height:1.25;}
+  .reveal-card .rc-p{font-size:11px;font-weight:700;color:var(--ink2);margin-top:4px;}
+  .reveal-card .rc-new{position:absolute;top:10px;right:-2px;font-size:10px;font-weight:800;background:var(--rLG);color:#fff;padding:3px 12px;border-radius:4px;box-shadow:0 2px 6px rgba(28,44,68,.25);}
+  @keyframes cardpop{0%{transform:scale(.3) rotate(-12deg);opacity:0}60%{transform:scale(1.08) rotate(3deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+
+  .roulette{width:100%;max-width:300px;height:120px;border-radius:16px;border:3px solid var(--gold-btn2);background:#fffdf7;overflow:hidden;position:relative;box-shadow:inset 0 0 24px rgba(28,44,68,.1);}
+  .roulette::before,.roulette::after{content:'';position:absolute;left:0;right:0;height:36px;z-index:2;pointer-events:none;}
+  .roulette::before{top:0;background:linear-gradient(180deg,#fffdf7,transparent);}
+  .roulette::after{bottom:0;background:linear-gradient(0deg,#fffdf7,transparent);}
+  .roulette .needle{position:absolute;top:50%;left:0;right:0;height:48px;transform:translateY(-50%);border-top:2px solid var(--gold-btn2);border-bottom:2px solid var(--gold-btn2);z-index:3;pointer-events:none;background:rgba(245,166,35,.08);}
+  .roul-strip{position:absolute;left:0;right:0;top:0;will-change:transform;}
+  .roul-item{height:48px;display:flex;align-items:center;justify-content:center;font-family:'Mochiy Pop One',sans-serif;font-size:30px;color:var(--ink);}
+  .roul-item.big{color:var(--gold-deep);}
+
+  .gacha-result{font-family:'Mochiy Pop One',sans-serif;font-size:46px;color:var(--gold-deep);margin-top:4px;animation:pop .5s;}
+  .gacha-total{font-size:14px;color:var(--ink2);font-weight:700;margin-top:14px;}
+  .gacha-total b{color:var(--gold-deep);font-size:20px;font-family:'Mochiy Pop One',sans-serif;}
+  .gacha-btn{margin-top:26px;background:linear-gradient(180deg,var(--gold-btn),var(--gold-btn2));border:none;color:#5a3d00;font-weight:800;font-size:16px;padding:14px 38px;border-radius:99px;cursor:pointer;box-shadow:0 4px 0 #d89417;font-family:inherit;}
+  .gacha-btn:active{transform:scale(.97);}
+
+  @keyframes pop{0%{transform:scale(.8);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  @keyframes slideup{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes blink{0%,100%{opacity:.35}50%{opacity:1}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="panel show" id="panel-today">
+    <div class="board">
+      <div class="board-top">
+        <div><div class="title">まいにち九段ベースボール</div><div class="date" id="dateLabel">--</div></div>
+        <div class="streak"><div class="num" id="streakNum">0</div><div class="lbl">れんしょう🔥</div></div>
+      </div>
+      <div class="count-row">
+        <span class="count-big"><span id="doneNum">0</span><span style="font-size:18px;color:#7c8a9e">/5</span></span>
+        <span class="count-sub">クエストクリア</span>
+        <span class="coin-chip">🪙 <span id="coinTotal">0</span>円</span>
+      </div>
+      <div class="bar"><i id="barFill"></i></div>
+    </div>
+    <div class="quests" id="questList"></div>
+    <div class="gachabar" id="gachaBar">
+      <div class="gt" id="gachaT">⚾ あと 5 つでガチャ！</div>
+      <div class="gs" id="gachaS">5つぜんぶクリアすると、選手カードガチャ＋お金ルーレットが回せる！</div>
+    </div>
+    <button class="reset" id="resetBtn">今日のチェックをリセット（保護者用）</button>
+  </div>
+
+  <div class="panel" id="panel-zukan">
+    <div class="board"><div class="board-top"><div><div class="title">ぼくの球団</div><div class="date">集めた選手カード図鑑</div></div></div></div>
+    <div class="coll-head">
+      <div class="ch-n"><span id="collGot">0</span> / <span id="collTotal">0</span></div>
+      <div class="ch-l">選手カード コンプリート率</div>
+      <div class="coll-bar"><i id="collBar"></i></div>
+    </div>
+    <div id="collBody"></div>
+  </div>
+
+  <div class="panel" id="panel-record">
+    <div class="board"><div class="board-top"><div><div class="title">きろく</div><div class="date">これまでのがんばり</div></div></div></div>
+    <div class="stat-grid">
+      <div class="stat"><div class="sn" id="stTotal">0</div><div class="sl">ホームランの日</div></div>
+      <div class="stat"><div class="sn" id="stBest">0</div><div class="sl">さいこう連勝🔥</div></div>
+      <div class="stat"><div class="sn" id="stYen">0</div><div class="sl">ためた金額(円)</div></div>
+      <div class="stat"><div class="sn" id="stCalc" style="font-size:17px">小4 きほん</div><div class="sl">計算のレベル</div></div>
+    </div>
+    <div class="sec-title">カレンダー</div>
+    <div class="sec-sub">緑=ぜんぶクリア / 黄=とちゅうまで</div>
+    <div class="calhead"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div>
+    <div class="cal" id="calGrid"></div>
+  </div>
+
+  <div class="panel" id="panel-parent">
+    <div class="board"><div class="board-top"><div><div class="title">先生メモ</div><div class="date">息子さんの答え・先生の講評（保護者用）</div></div></div></div>
+    <div class="sec-sub" style="margin-top:14px;">作文・音読・理科社会で、息子さんが書いた答えとAI先生の講評がここに残ります。新しい順。ときどき目を通して、明らかな間違いがあれば教えてあげてください。</div>
+    <div id="logList"></div>
+  </div>
+
+  <div class="panel" id="panel-plan">
+    <div class="board"><div class="board-top"><div><div class="title">さくせん</div><div class="date">九段中をめざすロードマップ</div></div></div></div>
+    <div class="sec-title">5つのデイリークエスト → ガチャ</div>
+    <div class="sec-sub">5つクリアでガチャが回せる。毎日つづけると約1か月で1,400円ペース。</div>
+    <div class="roadmap">
+      <div class="rm"><div class="rmh"><span class="e">🦉</span>Duolingo<span class="tag keep">毎日</span></div><ul><li>デイリークエストをクリア（保護者が確認）</li></ul></div>
+      <div class="rm"><div class="rmh"><span class="e">🔢</span>計算<span class="tag top">最優先</span></div><ul><li>小4の問題（筆算・九九・わり算・□・割合）をまんべんなく</li><li>正答率で「きほん→ひょうじゅん→はってん」へ自動調整</li></ul></div>
+      <div class="rm"><div class="rmh"><span class="e">📖</span>音読<span class="tag top">最優先</span></div><ul><li>えらんだテーマで先生が10分音読用の長めのお話を書く</li><li>青空文庫の名作も読める</li></ul></div>
+      <div class="rm"><div class="rmh"><span class="e">✍️</span>作文<span class="tag keep">穴うめ式</span></div><ul><li>空欄をうめるだけで200字の意見文が完成</li></ul></div>
+      <div class="rm"><div class="rmh"><span class="e">🔬</span>理科・社会のタネ</div><ul><li>えらんだテーマで「今日のなぜ？」を考える</li></ul></div>
+    </div>
+    <div class="sec-title">九段中のしくみ（保護者メモ）</div>
+    <div class="sec-sub">報告書200＋適性1(国語)200＋適性2(資料)300＋適性3(理数)300＝1000点。配点の6割が算数・理科・資料系。報告書は小4から入るので学校の成績も大事。</div>
+    <button class="reset" id="resetAllBtn">全データを初期化（保護者用）</button>
+  </div>
+</div>
+
+<div class="tabbar">
+  <div class="tab active" data-tab="today"><span class="ti">⚾</span>きょう</div>
+  <div class="tab" data-tab="zukan"><span class="ti">🃏</span>球団</div>
+  <div class="tab" data-tab="record"><span class="ti">📅</span>きろく</div>
+  <div class="tab" data-tab="parent"><span class="ti">📝</span>メモ</div>
+  <div class="tab" data-tab="plan"><span class="ti">🗺️</span>さくせん</div>
+</div>
+
+<div class="screen" id="screen"><div id="screenInner"></div></div>
+<div class="gacha" id="gacha"><div id="gachaInner"></div></div>
+<div class="burst" id="burst"></div>
+
+<script>
+// ===== 内蔵コンテンツ＋アプリ本体（オフライン・単体動作版 v5）=====
+// ============ 内蔵コンテンツ：音読 ============
+// 各話 {t:タイトル, s:本文(《》ふりがな), q:読みとり質問, a:模範要約例}
+const READINGS={
+baseball:[
+ {t:'はじめてのホームラン',s:'ユウタは、いつも空振《からぶ》りばかりの一年生だった。チームでいちばん下手《へた》だと言われ、くやしくて毎日《まいにち》、家のかべに向《む》かってボールを打《う》ち続《つづ》けた。手にまめができても、やめなかった。むかえた試合《しあい》の日。ピッチャーが投《な》げた球《たま》を、ユウタは思いきりふった。カキーンと高《たか》い音《おと》がして、ボールは青空《あおぞら》へ消《き》えていった。生《う》まれてはじめてのホームランだった。ベンチのみんなが、なみだを流《なが》してよろこんでくれた。下手でも、あきらめずに続けた人だけが見《み》られる景色《けしき》が、そこにはあった。',q:'ユウタはどうやってホームランを打てるようになったのかな？',a:'下手だと言われたユウタが、毎日かべに向かって練習を続けて、試合ではじめてホームランを打った話。'},
+ {t:'大谷選手の二刀流',s:'大谷翔平《おおたにしょうへい》という選手《せんしゅ》は、ピッチャーとバッターの両方《りょうほう》をこなす「二刀流《にとうりゅう》」で世界《せかい》をおどろかせた。ふつう、投《な》げる練習《れんしゅう》と打《う》つ練習は別《べつ》のもので、両方を一流《いちりゅう》にするのはむりだと言われていた。でも大谷選手は、子《こ》どものころからの夢《ゆめ》をあきらめなかった。だれよりも体《からだ》をきたえ、食事《しょくじ》や睡眠《すいみん》まで考《かんが》えぬいた。「できない」と言われたことを「できる」に変《か》えたのだ。今《いま》では世界中《せかいじゅう》の子どもたちが、大谷選手を見《み》て夢を持《も》つようになった。',q:'なぜ大谷選手はすごいと言われているのかな？',a:'むりだと言われた二刀流を、夢をあきらめず努力して実現し、世界をおどろかせた話。'},
+ {t:'サッカーボールのひみつ',s:'サッカーボールをよく見《み》ると、白《しろ》と黒《くろ》の四角《しかく》や五角形《ごかくけい》がつなぎ合《あ》わさってできている。なぜ、わざわざこんな形《かたち》にするのだろう。じつは、平《たい》らな板《いた》をたくさんつなげると、きれいな丸《まる》い球《きゅう》に近《ちか》づくからだ。丸《まる》ければ丸いほど、まっすぐ転《ころ》がり、思《おも》ったところへ飛《と》んでいく。白と黒のもようにも理由《りゆう》がある。昔《むかし》の白黒《しろくろ》テレビでも、ボールがどう回転《かいてん》しているか見《み》やすくするためだったのだ。あたりまえに見えるものにも、考《かんが》えぬかれた工夫《くふう》がかくれている。',q:'サッカーボールが白と黒のもようなのは、なぜだった？',a:'たくさんの板をつなげて丸い形にするため、白黒は回転を見やすくするための工夫だという話。'},
+ {t:'イチローのバット',s:'イチローという選手《せんしゅ》は、自分《じぶん》の道具《どうぐ》をとても大切《たいせつ》にすることで有名《ゆうめい》だった。試合《しあい》が終《お》わると、グローブを毎回《まいかい》ていねいにみがき、バットは専用《せんよう》のケースに入《い》れて、しめった場所《ばしょ》に置《お》かないようにした。「道具を大事《だいじ》にしない人《ひと》は、よいプレーはできない」と考《かんが》えていたからだ。小《ちい》さなことを、だれよりもきちんと続《つづ》ける。その積《つ》み重《かさ》ねが、世界《せかい》の記録《きろく》を作《つく》る選手をささえていた。天才《てんさい》と呼《よ》ばれた人《ひと》は、じつはいちばん地道《じみち》な人《ひと》だったのだ。',q:'イチローはどんなことを大切にしていたのかな？',a:'道具をていねいに手入れし、小さなことを地道に続けることを大切にしていたという話。'},
+ {t:'円陣のかけ声',s:'試合《しあい》が始《はじ》まる前《まえ》、選手《せんしゅ》たちは肩《かた》を組《く》んで円《えん》になり、大《おお》きな声《こえ》でかけ声《ごえ》を出《だ》す。これを「円陣《えんじん》」という。なぜ、わざわざ集《あつ》まって声を出すのだろう。じつは、みんなで同《おな》じ言葉《ことば》をさけぶと、きんちょうがやわらぎ、心《こころ》が一《ひと》つになるからだ。一人《ひとり》ではこわい相手《あいて》も、仲間《なかま》といっしょなら立《た》ち向《む》かえる。スポーツは体《からだ》の力《ちから》だけでなく、心の力もとても大事《だいじ》なのだ。声を出すという小《ちい》さな行動《こうどう》が、チーム全体《ぜんたい》を強《つよ》くしている。',q:'円陣を組んで声を出すのは、なぜなのかな？',a:'みんなで声を出すことで、きんちょうがやわらぎ、心が一つになってチームが強くなるという話。'},
+],
+nature:[
+ {t:'ティラノサウルスの目',s:'恐竜《きょうりゅう》の王様《おうさま》、ティラノサウルスは、するどい歯《は》と大《おお》きな体《からだ》で有名《ゆうめい》だ。でも、もっとすごいのは「目《め》」だったと言《い》われている。ティラノサウルスの目は前向《まえむ》きについていて、二《ふた》つの目で同《おな》じものを見《み》ることができた。すると、えものまでのきょりが正確《せいかく》にわかる。だから、にげる動物《どうぶつ》にとびかかるのが上手《じょうず》だったのだ。今《いま》のワシやタカも、同じように前向きの目を持《も》っている。体の大きさだけでなく、目のしくみまで、かりに向《む》いた体だったのだ。',q:'ティラノサウルスの目には、どんなひみつがあった？',a:'前向きの目で二つの目を使い、えものまでのきょりを正確につかめたから、かりが上手だったという話。'},
+ {t:'宇宙にうかぶ理由',s:'宇宙飛行士《うちゅうひこうし》は、宇宙船《うちゅうせん》の中《なか》でフワフワとうかんでいる。なぜ重《おも》さがなくなるのだろう。じつは、重さがゼロになっているわけではない。宇宙船は地球《ちきゅう》のまわりをものすごい速《はや》さで回《まわ》り続《つづ》けていて、ずっと「落《お》ち続《つづ》けている」状態《じょうたい》なのだ。落ちながら前《まえ》に進《すす》むので、地面《じめん》にぶつからずに回り続ける。その中《なか》にいる人《ひと》も、いっしょに落ち続けているから、うかんでいるように感《かん》じる。ふしぎに見《み》えることも、よく考《かんが》えると、ちゃんと理由《りゆう》があるのだ。',q:'宇宙飛行士がうかんで見えるのは、なぜなのかな？',a:'宇宙船が地球のまわりを回りながらずっと落ち続けていて、中の人も一緒に落ちているからうかんで見えるという話。'},
+ {t:'ホタルの光',s:'夏《なつ》の夜《よる》、ホタルはおしりを光《ひか》らせて飛《と》ぶ。あの光は、熱《あつ》くないのにかがやく、ふしぎな光だ。ホタルの体《からだ》の中《なか》には、光のもとになる特別《とくべつ》な物質《ぶっしつ》があり、それが空気《くうき》とまざると光る。電球《でんきゅう》のように熱《ねつ》を出《だ》さないので、エネルギーをむだにしない、とてもすぐれた光なのだ。ホタルはこの光で、なかまに「ここにいるよ」と知《し》らせ合《あ》っている。小《ちい》さな虫《むし》が、人間《にんげん》のすごい技術《ぎじゅつ》より上手《じょうず》に光を作《つく》っている。自然《しぜん》には、まだまだ学《まな》ぶことがたくさんある。',q:'ホタルはどうやって光っているのかな？',a:'体の中の特別な物質が空気とまざって、熱を出さずに光り、なかまと知らせ合っているという話。'},
+ {t:'わたり鳥の地図',s:'秋《あき》になると、ツバメなどのわたり鳥《どり》は、何千《なんぜん》キロもはなれた南《みなみ》の国《くに》へ飛《と》んでいく。地図《ちず》もないのに、どうして道《みち》がわかるのだろう。研究《けんきゅう》によると、わたり鳥は太陽《たいよう》や星《ほし》の位置《いち》を目印《めじるし》にしたり、地球《ちきゅう》の見《み》えない力《ちから》を感《かん》じたりして、方向《ほうこう》を知《し》るらしい。さらにおどろくのは、子《こ》どもの鳥が、一度《いちど》も行《い》ったことのない場所《ばしょ》へ、自分《じぶん》だけでたどりつけることだ。生《う》まれつき、体《からだ》の中《なか》に地図を持《も》っているのかもしれない。自然《しぜん》のふしぎは、人間《にんげん》の想像《そうぞう》をこえている。',q:'わたり鳥は、どうやって遠い国まで道がわかるのかな？',a:'太陽や星の位置や地球の力を感じて方向を知り、行ったことのない場所にもたどりつけるという話。'},
+ {t:'クモの糸の強さ',s:'クモがはる細《ほそ》い糸《いと》は、見《み》た目《め》は弱《よわ》そうなのに、じつはおどろくほど強《つよ》い。同《おな》じ太《ふと》さの鉄《てつ》とくらべても、クモの糸のほうが切《き》れにくいと言《い》われている。しかも、よくのびるので、虫《むし》がぶつかってもやぶれずに、しっかりつかまえることができる。人間《にんげん》は、このクモの糸のひみつをまねして、新《あたら》しい丈夫《じょうぶ》な材料《ざいりょう》を作《つく》ろうとしている。小《ちい》さな生《い》き物《もの》のしくみが、未来《みらい》の技術《ぎじゅつ》のヒントになるのだ。身近《みぢか》な自然《しぜん》をよく見《み》ると、すごい発見《はっけん》がかくれている。',q:'クモの糸のすごいところは、どんなところかな？',a:'細いのに鉄より強くてよくのび、人間が新しい材料のヒントにしようとしているという話。'},
+],
+mecha:[
+ {t:'新幹線の鼻',s:'新幹線《しんかんせん》の先頭《せんとう》は、鳥《とり》のくちばしのように長《なが》くとがっている。なぜ、あんな形《かたち》をしているのだろう。昔《むかし》、新幹線がトンネルに入《はい》るとき、大《おお》きな音《おと》が鳴《な》ってこまっていた。そこで技術者《ぎじゅつしゃ》たちは、水《みず》にすばやくとびこむ鳥「カワセミ」のくちばしに注目《ちゅうもく》した。あの形《かたち》をまねて先頭を作《つく》ると、空気《くうき》をうまく切《き》りさいて、音が小《ちい》さくなったのだ。自然《しぜん》の生《い》き物《もの》から学《まな》んで、問題《もんだい》を解決《かいけつ》したのである。よく見《み》て、よく考《かんが》える人《ひと》が、新《あたら》しいものを生《う》み出《だ》す。',q:'新幹線の先頭が長くとがっているのは、なぜかな？',a:'カワセミのくちばしをまねて空気を切りさき、トンネルでの大きな音を小さくするためだという話。'},
+ {t:'ロボットそうじ機の頭脳',s:'自動《じどう》でゆかをそうじするロボットは、ぶつからずに部屋《へや》中《じゅう》をきれいにする。どうやって道《みち》を見《み》つけているのだろう。ロボットの中《なか》には、まわりを感《かん》じるセンサーが入《はい》っていて、かべやイスにぶつかる前《まえ》に向《む》きを変《か》える。さらに、どこをそうじしたか覚《おぼ》えていて、同《おな》じ場所《ばしょ》ばかりやらないようにしている。人間《にんげん》が決《き》めたルールにしたがって、自分《じぶん》で考《かんが》えて動《うご》いているのだ。これからのロボットは、もっとかしこくなって、わたしたちの生活《せいかつ》を助《たす》けてくれるだろう。便利《べんり》な機械《きかい》の中《なか》には、たくさんの工夫《くふう》がつまっている。',q:'そうじロボットは、どうやってぶつからずに動いているのかな？',a:'センサーでまわりを感じて向きを変え、そうじした場所を覚えて動いているという話。'},
+ {t:'エレベーターのつな',s:'高《たか》いビルのエレベーターは、太《ふと》いつなで箱《はこ》をつり上《あ》げている。もし、そのつなが切《き》れたらと考《かんが》えると、こわくなる。でも、安心《あんしん》していい。エレベーターには、つなが切れても箱が落《お》ちないように、自動《じどう》でブレーキがかかるしくみがついている。スピードが出《で》すぎると、すぐに金具《かなぐ》がレールをつかんで止《と》めるのだ。しかも、つなは一本《いっぽん》ではなく、何本《なんぼん》もまとめて使《つか》われている。安全《あんぜん》のために、いくつもの備《そな》えが重《かさ》ねられている。便利《べんり》な機械《きかい》は、見《み》えないところで人《ひと》を守《まも》っているのだ。',q:'エレベーターは、つなが切れても落ちないのはなぜかな？',a:'自動でブレーキがかかるしくみがあり、つなも何本も使われていて、安全のための備えが重ねられているという話。'},
+ {t:'信号機の色',s:'道《みち》の信号機《しんごうき》は、赤《あか》・黄《き》・青《あお》の三《みっ》つの色《いろ》でできている。なぜこの三色《さんしょく》なのだろう。赤は、遠《とお》くからでもいちばん目立《めだ》つ色《いろ》なので、「止《と》まれ」というあぶない合図《あいず》に使《つか》われている。青《あお》(緑《みどり》)は赤の反対《はんたい》で安心《あんしん》を感《かん》じる色《いろ》、黄《き》はその間《あいだ》の「注意《ちゅうい》」だ。世界中《せかいじゅう》どこの国《くに》へ行《い》っても、だいたい同《おな》じ色が使われている。みんなが同じルールを知《し》っているから、言葉《ことば》が通《つう》じない人《ひと》どうしでも、安全《あんぜん》に道路《どうろ》を使《つか》えるのだ。色《いろ》には、人《ひと》を動《うご》かす力《ちから》がある。',q:'信号の「止まれ」が赤色なのは、なぜかな？',a:'赤は遠くからいちばん目立つ色だから、あぶない合図に使われていて、世界中で同じルールになっているという話。'},
+ {t:'飛行機が飛ぶわけ',s:'何百《なんびゃく》人《にん》も乗《の》った重《おも》い飛行機《ひこうき》が、どうして空《そら》を飛《と》べるのだろう。ひみつは「つばさ」の形《かたち》にある。飛行機のつばさは、上《うえ》がふくらんだ形《かたち》をしていて、速《はや》く進《すす》むと、つばさの上を流《なが》れる空気《くうき》と下《した》を流れる空気の速《はや》さに差《さ》ができる。すると、つばさを上《うえ》へおし上《あ》げる力《ちから》が生《う》まれるのだ。この力を「揚力《ようりょく》」という。エンジンで前《まえ》に進《すす》む力《ちから》と、つばさが生《う》む上向《うわむ》きの力《ちから》。二《ふた》つの力《ちから》が合《あ》わさって、巨大《きょだい》な機体《きたい》が空にうかぶ。科学《かがく》の力《ちから》は、人《ひと》の夢《ゆめ》をかなえてきた。',q:'飛行機が空を飛べるのは、何のおかげかな？',a:'つばさの形で上下の空気の速さに差ができて上向きの力が生まれ、エンジンの力と合わさって飛べるという話。'},
+],
+history:[
+ {t:'徳川家康のがまん',s:'徳川家康《とくがわいえやす》は、戦国《せんごく》の世《よ》を勝《か》ちぬいて、平和《へいわ》な江戸《えど》時代《じだい》を作《つく》った人《ひと》だ。家康は、子《こ》どものころ、他《ほか》の大名《だいみょう》の家《いえ》に人質《ひとじち》として預《あず》けられ、長《なが》い間《あいだ》つらい思《おも》いをした。でも、すぐにあばれたりせず、じっとがまんして力《ちから》をたくわえた。「あわてず、時《とき》を待《ま》つ」ことを知《し》っていたのだ。ライバルがほろびていく中《なか》で、最後《さいご》まで生《い》き残《のこ》り、天下《てんか》を取《と》った。すぐに結果《けっか》を求《もと》めず、じっくり続《つづ》ける。家康の生《い》き方《かた》は、今《いま》を生《い》きるわたしたちにも、大切《たいせつ》なことを教《おし》えてくれる。',q:'徳川家康は、どんなことを大切にして天下を取ったのかな？',a:'つらいときもあわてず、がまんして力をたくわえ、時を待って最後まで生き残り天下を取ったという話。'},
+ {t:'コロンブスの卵',s:'昔《むかし》、新《あたら》しい大陸《たいりく》を見《み》つけた冒険家《ぼうけんか》コロンブスに、ある人《ひと》が言《い》った。「そんなの、船《ふね》で行《い》けばだれでもできる」。するとコロンブスは、ゆで卵《たまご》を取《と》り出《だ》し、「これをテーブルに立《た》ててみてください」と言《い》った。だれもできない。コロンブスは卵《たまご》のおしりを軽《かる》くわって、ぐらつかないように立《た》てた。「ほら、できた」。みんなは「そんなの、見《み》たあとなら、だれでもできる」と言った。コロンブスは答《こた》えた。「そう、人《ひと》がやったあとは、かんたんに見《み》える。でも、最初《さいしょ》に思《おも》いつくのが、いちばんむずかしいのです」。',q:'コロンブスは、卵を使って何を伝えたかったのかな？',a:'人がやったあとは簡単に見えるけれど、最初に思いつくことがいちばんむずかしい、と伝えたかったという話。'},
+ {t:'ナイチンゲールの記録',s:'昔《むかし》、戦争《せんそう》でケガをした兵士《へいし》たちは、きたない病院《びょういん》で次々《つぎつぎ》と命《いのち》を落《お》としていた。看護師《かんごし》のナイチンゲールは、病院《びょういん》をきれいにそうじし、なぜ人《ひと》が亡《な》くなるのかを、毎日《まいにち》数字《すうじ》で記録《きろく》し続《つづ》けた。すると、戦《たたか》いのケガそのものより、不潔《ふけつ》な環境《かんきょう》で病気《びょうき》になって亡《な》くなる人《ひと》のほうがずっと多《おお》いとわかった。彼女《かのじょ》はその記録を見《み》やすい図《ず》にまとめ、国《くに》を動《うご》かして病院《びょういん》を変《か》えた。「思《おも》いやり」と「正《ただ》しく調《しら》べる力《ちから》」の両方《りょうほう》が、たくさんの命《いのち》を救《すく》ったのだ。',q:'ナイチンゲールは、どうやってたくさんの命を救ったのかな？',a:'病院をきれいにし、亡くなる理由を数字で記録して図にまとめ、国を動かして病院を変えたという話。'},
+ {t:'杉原千畝のビザ',s:'昔《むかし》、戦争《せんそう》の時代《じだい》、外国《がいこく》で働《はたら》いていた日本人《にほんじん》の杉原千畝《すぎはらちうね》のもとに、たくさんの人々《ひとびと》が助《たす》けを求《もと》めてやってきた。命《いのち》をねらわれ、にげる先《さき》がない人々《ひとびと》だった。国《くに》のルールでは、その人《ひと》たちを助《たす》ける書類《しょるい》を出《だ》してはいけなかった。でも杉原は、まよったすえに、自分《じぶん》の立場《たちば》があぶなくなっても、書類《しょるい》を書《か》き続《つづ》けた。手《て》がはれて動《うご》かなくなるまで書《か》き、何千《なんぜん》人《にん》もの命《いのち》を救《すく》った。ルールよりも、人《ひと》の命《いのち》を選《えら》んだ勇気《ゆうき》ある決断《けつだん》だった。',q:'杉原千畝は、どんな決断をして人々を救ったのかな？',a:'国のルールに反しても、自分があぶなくなっても書類を書き続けて、何千人もの命を救ったという話。'},
+ {t:'エジソンの失敗',s:'発明王《はつめいおう》エジソンは、電球《でんきゅう》を作《つく》るために、光《ひか》り続《つづ》ける糸《いと》の材料《ざいりょう》をさがしていた。うまくいかない実験《じっけん》を、なんと何千回《なんぜんかい》もくり返《かえ》した。ある人《ひと》が「そんなに失敗《しっぱい》してつらくないの」と聞《き》くと、エジソンは答《こた》えた。「失敗じゃないよ。うまくいかない方法《ほうほう》を、何千《なんぜん》も見《み》つけたんだ」。彼《かれ》は、できないとわかることも、前《まえ》に進《すす》むための大事《だいじ》な一歩《いっぽ》だと考《かんが》えていた。あきらめずに続《つづ》けた結果《けっか》、ついに長《なが》く光る電球が生《う》まれ、世界中《せかいじゅう》の夜《よる》が明《あか》るくなった。',q:'エジソンは、失敗をどう考えていたのかな？',a:'失敗を「うまくいかない方法を見つけたこと」と前向きにとらえ、あきらめず続けて電球を完成させたという話。'},
+],
+};
+
+// ============ 内蔵コンテンツ：作文 ============
+// {q:お題, tmpl:穴うめ文(［①］), blanks:[{l:ラベル,h:ヒント}], ex:[いろんな書き方の例]}
+const WRITINGS={
+baseball:[
+ {q:'きみが「これだけは負《ま》けたくない」と思《おも》うことは何《なに》ですか。理由《りゆう》もいっしょに書《か》いてみよう。',
+  tmpl:'ぼくが「これだけは負けたくない」と思うことは［①］です。なぜなら［②］からです。たとえば［③］。だから、これからも［④］たいです。',
+  blanks:[{l:'①',h:'とくいなこと（例：かけっこ）'},{l:'②',h:'その理由'},{l:'③',h:'具体的なできごと'},{l:'④',h:'これからの目標'}],
+  ex:['ぼくが「これだけは負けたくない」と思うことは、なわとびです。なぜなら、毎日れんしゅうしてきたからです。たとえば、二重とびが一度もできなかったけれど、百回れんしゅうしてできるようになりました。だから、これからも続けたいです。',
+      'ぼくが「これだけは負けたくない」と思うことは、やさしさです。なぜなら、こまっている人を助けるのが好きだからです。たとえば、ころんだ一年生に手をかしました。だから、これからもやさしい人でいたいです。']},
+ {q:'スポーツでチームで力《ちから》を合《あ》わせるのと、一人《ひとり》でがんばるのと、どちらが楽《たの》しいと思《おも》いますか。理由《りゆう》も書《か》こう。',
+  tmpl:'ぼくは、［①］のほうが楽しいと思います。なぜなら［②］からです。たとえば［③］。だから、ぼくは［①］が好きです。',
+  blanks:[{l:'①',h:'「チーム」か「一人」か'},{l:'②',h:'楽しいと思う理由'},{l:'③',h:'そう感じたできごと'}],
+  ex:['ぼくは、チームのほうが楽しいと思います。なぜなら、みんなでよろこびを分け合えるからです。たとえば、サッカーで友だちのパスからゴールを決めたとき、いっしょに大よろこびしました。だから、ぼくはチームが好きです。',
+      'ぼくは、一人のほうが楽しいと思います。なぜなら、自分のペースで力をのばせるからです。たとえば、水泳でタイムがちぢまると、自分の成長がよくわかります。だから、ぼくは一人でがんばるのが好きです。']},
+ {q:'もしプロのスポーツ選手《せんしゅ》になれるとしたら、どんな選手になりたいですか。',
+  tmpl:'ぼくは［①］な選手になりたいです。なぜなら［②］からです。そのために、今《いま》から［③］をがんばります。',
+  blanks:[{l:'①',h:'どんな選手か（例：あきらめない）'},{l:'②',h:'その理由'},{l:'③',h:'今からできること'}],
+  ex:['ぼくは、最後まであきらめない選手になりたいです。なぜなら、見ている人に勇気をあたえられるからです。そのために、今から、つらいときもれんしゅうを続けることをがんばります。',
+      'ぼくは、チームのみんなから信らいされる選手になりたいです。なぜなら、一人の力には限りがあるからです。そのために、今から、友だちと協力することをがんばります。']},
+ {q:'試合《しあい》に負《ま》けてくやしいとき、きみならどうしますか。',
+  tmpl:'ぼくは試合に負けたとき、［①］します。なぜなら［②］からです。負けは、ぼくにとって［③］だと思います。',
+  blanks:[{l:'①',h:'負けたあとにすること'},{l:'②',h:'その理由'},{l:'③',h:'負けをどう考えるか'}],
+  ex:['ぼくは試合に負けたとき、どこがいけなかったか考えます。なぜなら、同じ負けをくり返したくないからです。負けは、ぼくにとって次に強くなるためのヒントだと思います。',
+      'ぼくは試合に負けたとき、まず思いきりくやしがります。なぜなら、本気だったしょうこだからです。でもそのあと、また練習をはじめます。負けは、ぼくにとってばねになるものだと思います。']},
+ {q:'運動《うんどう》が苦手《にがて》な友《とも》だちがいたら、きみはどう声《こえ》をかけますか。',
+  tmpl:'ぼくは、運動が苦手な友だちに「［①］」と声をかけます。なぜなら［②］からです。みんなで［③］のがいちばんだと思います。',
+  blanks:[{l:'①',h:'かけたい言葉'},{l:'②',h:'その理由'},{l:'③',h:'どうするのがよいか'}],
+  ex:['ぼくは、運動が苦手な友だちに「いっしょにやろう」と声をかけます。なぜなら、一人だと心細いからです。みんなで楽しむのがいちばんだと思います。',
+      'ぼくは、運動が苦手な友だちに「少しずつでいいよ」と声をかけます。なぜなら、あせるとますますいやになるからです。みんなで気長に応えんするのがいちばんだと思います。']},
+],
+nature:[
+ {q:'もし好《す》きな動物《どうぶつ》を一《ひと》つかえるとしたら、何《なに》をかいたいですか。理由《りゆう》も書《か》こう。',
+  tmpl:'ぼくは［①］をかいたいです。なぜなら［②］からです。もしかえたら、いっしょに［③］したいです。',
+  blanks:[{l:'①',h:'かいたい動物'},{l:'②',h:'その理由'},{l:'③',h:'いっしょにしたいこと'}],
+  ex:['ぼくは犬をかいたいです。なぜなら、いつもそばにいてくれる友だちになるからです。もしかえたら、いっしょに公園を走りたいです。',
+      'ぼくはカメをかいたいです。なぜなら、長生きで、ずっといっしょにいられるからです。もしかえたら、いっしょにのんびり過ごしたいです。']},
+ {q:'恐竜《きょうりゅう》は、なぜいなくなってしまったのだと思《おも》いますか。きみの考《かんが》えを書《か》こう。',
+  tmpl:'ぼくは、恐竜がいなくなったのは［①］からだと思います。そう考えた理由は［②］です。もし恐竜が生《い》きていたら［③］と思います。',
+  blanks:[{l:'①',h:'いなくなった理由の予想'},{l:'②',h:'そう考えた理由'},{l:'③',h:'想像してみよう'}],
+  ex:['ぼくは、恐竜がいなくなったのは、大きないん石が落ちて寒くなったからだと思います。そう考えた理由は、食べ物がなくなると大きな体をささえられないからです。もし恐竜が生きていたら、動物園は今よりずっとはく力があると思います。',
+      'ぼくは、恐竜がいなくなったのは、地球の気こうが大きく変わったからだと思います。そう考えた理由は、急な変化に体が合わせられなかったと思うからです。もし恐竜が生きていたら、人間とくらすのは大変だと思います。']},
+ {q:'宇宙《うちゅう》に行《い》けるとしたら、何《なに》をしてみたいですか。',
+  tmpl:'ぼくが宇宙に行けたら、［①］をしてみたいです。なぜなら［②］からです。きっと［③］だと思います。',
+  blanks:[{l:'①',h:'宇宙でしたいこと'},{l:'②',h:'その理由'},{l:'③',h:'どんな気持ちか想像'}],
+  ex:['ぼくが宇宙に行けたら、地球をまるごとながめてみたいです。なぜなら、ふだん見られない景色だからです。きっと、自分がとても小さく感じると思います。',
+      'ぼくが宇宙に行けたら、フワフワうかんでとんでみたいです。なぜなら、地球ではぜったいにできないからです。きっと、夢のような気持ちになると思います。']},
+ {q:'自然《しぜん》を守《まも》るために、きみができることは何《なに》だと思《おも》いますか。',
+  tmpl:'ぼくが自然を守るためにできることは、［①］です。なぜなら［②］からです。小《ちい》さなことでも［③］と思います。',
+  blanks:[{l:'①',h:'できること'},{l:'②',h:'その理由'},{l:'③',h:'続けるとどうなるか'}],
+  ex:['ぼくが自然を守るためにできることは、ゴミを分別することです。なぜなら、ゴミをへらすと地球がよごれにくくなるからです。小さなことでも、みんなが続ければ大きな力になると思います。',
+      'ぼくが自然を守るためにできることは、水を出しっぱなしにしないことです。なぜなら、水は限りある大切なものだからです。小さなことでも、毎日続ければ意味があると思います。']},
+ {q:'生《い》き物《もの》の中《なか》で、いちばんすごいと思《おも》うものは何《なに》ですか。',
+  tmpl:'ぼくがいちばんすごいと思う生き物は［①］です。なぜなら［②］からです。とくに［③］がすごいと思います。',
+  blanks:[{l:'①',h:'すごいと思う生き物'},{l:'②',h:'その理由'},{l:'③',h:'とくにすごいところ'}],
+  ex:['ぼくがいちばんすごいと思う生き物はアリです。なぜなら、自分の何倍も重いものを運べるからです。とくに、みんなで力を合わせて働くところがすごいと思います。',
+      'ぼくがいちばんすごいと思う生き物はイルカです。なぜなら、音で会話ができるからです。とくに、なかまと助け合うかしこさがすごいと思います。']},
+],
+mecha:[
+ {q:'もし新《あたら》しい乗《の》り物《もの》を発明《はつめい》できるとしたら、どんなものを作《つく》りたいですか。',
+  tmpl:'ぼくは［①］という乗り物を作りたいです。それは［②］ことができます。なぜなら［③］からです。',
+  blanks:[{l:'①',h:'乗り物の名前や種類'},{l:'②',h:'できること'},{l:'③',h:'作りたい理由'}],
+  ex:['ぼくは、空をとぶ自転車を作りたいです。それは、わたしたちをじゅうたいなしで運ぶことができます。なぜなら、毎日の道路のこみ具合をなくしたいからです。',
+      'ぼくは、海の中を進む家を作りたいです。それは、海の生き物を近くで見ることができます。なぜなら、知らない世界をぼうけんしてみたいからです。']},
+ {q:'べんりな機械《きかい》が増《ふ》えるのは、よいことだと思《おも》いますか。きみの考《かんが》えを書《か》こう。',
+  tmpl:'ぼくは、べんりな機械が増えるのは［①］と思います。なぜなら［②］からです。でも［③］は大切にしたいです。',
+  blanks:[{l:'①',h:'「よいこと」か「気をつけること」か'},{l:'②',h:'その理由'},{l:'③',h:'大切にしたいこと'}],
+  ex:['ぼくは、べんりな機械が増えるのはよいことだと思います。なぜなら、人のしごとが楽になり、時間ができるからです。でも、自分で考える力は大切にしたいです。',
+      'ぼくは、べんりな機械が増えるのは少し気をつけることだと思います。なぜなら、たよりすぎると自分でできなくなるからです。でも、上手に使うかしこさは大切にしたいです。']},
+ {q:'ロボットが、もっと人《ひと》の生活《せいかつ》を助《たす》けるには、どんなことができるとよいと思《おも》いますか。',
+  tmpl:'ぼくは、ロボットが［①］できるとよいと思います。なぜなら［②］からです。そうすれば［③］と思います。',
+  blanks:[{l:'①',h:'ロボットにしてほしいこと'},{l:'②',h:'その理由'},{l:'③',h:'どうなるか'}],
+  ex:['ぼくは、ロボットがお年よりの手助けをできるとよいと思います。なぜなら、こまっている人がたくさんいるからです。そうすれば、みんなが安心してくらせると思います。',
+      'ぼくは、ロボットが災害のときに人を助けられるとよいと思います。なぜなら、人が入れない危険な場所もあるからです。そうすれば、もっと多くの命が救えると思います。']},
+ {q:'きみが「すごい」と思《おも》う発明《はつめい》は何《なに》ですか。理由《りゆう》も書《か》こう。',
+  tmpl:'ぼくがすごいと思う発明は［①］です。なぜなら［②］からです。これがなかったら［③］と思います。',
+  blanks:[{l:'①',h:'すごいと思う発明'},{l:'②',h:'その理由'},{l:'③',h:'なかったらどうなるか'}],
+  ex:['ぼくがすごいと思う発明は電気です。なぜなら、夜でも明るく過ごせるからです。これがなかったら、暗くなると何もできないと思います。',
+      'ぼくがすごいと思う発明は飛行機です。なぜなら、遠い国へ短い時間で行けるからです。これがなかったら、世界はもっと遠く感じると思います。']},
+ {q:'機械《きかい》にできないことで、人間《にんげん》だからできることは何《なに》だと思《おも》いますか。',
+  tmpl:'ぼくは、人間だからできることは［①］だと思います。なぜなら［②］からです。だから人間は［③］と思います。',
+  blanks:[{l:'①',h:'人間だからできること'},{l:'②',h:'その理由'},{l:'③',h:'人間のよさ'}],
+  ex:['ぼくは、人間だからできることは、人の気持ちを思いやることだと思います。なぜなら、心があるからです。だから人間は、たがいに助け合えるすばらしいそんざいだと思います。',
+      'ぼくは、人間だからできることは、新しいものを思いつくことだと思います。なぜなら、自由に想像できるからです。だから人間は、これからも世界を変えていけると思います。']},
+],
+history:[
+ {q:'昔《むかし》の人《ひと》と今《いま》のわたしたちで、変《か》わらず大切《たいせつ》なことは何《なに》だと思《おも》いますか。',
+  tmpl:'ぼくは、昔も今も変わらず大切なことは［①］だと思います。なぜなら［②］からです。だから、ぼくも［③］たいです。',
+  blanks:[{l:'①',h:'変わらず大切なこと'},{l:'②',h:'その理由'},{l:'③',h:'自分はどうしたいか'}],
+  ex:['ぼくは、昔も今も変わらず大切なことは、人を思いやる心だと思います。なぜなら、いつの時代も人は一人では生きられないからです。だから、ぼくも、まわりの人を大切にしたいです。',
+      'ぼくは、昔も今も変わらず大切なことは、あきらめない気持ちだと思います。なぜなら、むずかしいことをやりとげる力になるからです。だから、ぼくも、最後までがんばりたいです。']},
+ {q:'歴史《れきし》の人物《じんぶつ》で、会《あ》ってみたい人《ひと》はだれですか。会ったら何《なに》を聞《き》きたいですか。',
+  tmpl:'ぼくは［①］に会ってみたいです。なぜなら［②］からです。会ったら「［③］」と聞いてみたいです。',
+  blanks:[{l:'①',h:'会いたい人'},{l:'②',h:'その理由'},{l:'③',h:'聞きたいこと'}],
+  ex:['ぼくは織田信長に会ってみたいです。なぜなら、新しいことに挑戦した人だからです。会ったら「こわくなかったですか」と聞いてみたいです。',
+      'ぼくはエジソンに会ってみたいです。なぜなら、たくさん失敗してもあきらめなかったからです。会ったら「どうして続けられたのですか」と聞いてみたいです。']},
+ {q:'もしタイムマシンで昔《むかし》に行《い》けたら、いつの時代《じだい》に行《い》ってみたいですか。',
+  tmpl:'ぼくは［①］の時代に行ってみたいです。なぜなら［②］からです。そこで［③］をしてみたいです。',
+  blanks:[{l:'①',h:'行きたい時代（例：江戸時代）'},{l:'②',h:'その理由'},{l:'③',h:'してみたいこと'}],
+  ex:['ぼくは江戸時代に行ってみたいです。なぜなら、今とちがう町のようすを見てみたいからです。そこで、昔の人と話して、くらしを聞いてみたいです。',
+      'ぼくは恐竜のいた大昔に行ってみたいです。なぜなら、本物の恐竜を見たいからです。そこで、遠くからそっと観察してみたいです。']},
+ {q:'むかしの人《ひと》は、電気《でんき》も車《くるま》もない中《なか》でくらしていました。今《いま》のわたしたちは、むかしの人より幸《しあわ》せだと思《おも》いますか。',
+  tmpl:'ぼくは、今のわたしたちは昔の人より［①］と思います。なぜなら［②］からです。でも［③］は、昔の人から学《まな》びたいです。',
+  blanks:[{l:'①',h:'「幸せ」か「同じくらい」か'},{l:'②',h:'その理由'},{l:'③',h:'昔から学びたいこと'}],
+  ex:['ぼくは、今のわたしたちは昔の人より便利でめぐまれていると思います。なぜなら、病気も治りやすく、遠くへも行けるからです。でも、ものを大切にする心は、昔の人から学びたいです。',
+      'ぼくは、今のわたしたちは昔の人と同じくらいだと思います。なぜなら、便利でも、なやみは今もあるからです。でも、足りない中で工夫する力は、昔の人から学びたいです。']},
+ {q:'国《くに》や世界《せかい》をよくするために、リーダーにいちばん必要《ひつよう》なものは何《なに》だと思《おも》いますか。',
+  tmpl:'ぼくは、リーダーにいちばん必要なものは［①］だと思います。なぜなら［②］からです。そういうリーダーなら［③］と思います。',
+  blanks:[{l:'①',h:'必要なもの（例：やさしさ）'},{l:'②',h:'その理由'},{l:'③',h:'どうなるか'}],
+  ex:['ぼくは、リーダーにいちばん必要なものは、みんなの話を聞く力だと思います。なぜなら、いろんな人の気持ちを大切にできるからです。そういうリーダーなら、みんなが安心してついていけると思います。',
+      'ぼくは、リーダーにいちばん必要なものは、決断する勇気だと思います。なぜなら、むずかしいときに前へ進めるからです。そういうリーダーなら、こまったときも国をまとめられると思います。']},
+],
+};
+
+// ============ 内蔵コンテンツ：理科社会のタネ ============
+// {q:今日のなぜ？, think:考えるヒント, a:本当の答え, views:[いろんな見方・考え方]}
+const SCIENCE={
+baseball:[
+ {q:'なぜ、野球《やきゅう》のボールには赤《あか》い縫《ぬ》い目《め》があるのだろう？',
+  think:'ボールが空気《くうき》の中《なか》を飛《と》ぶとき、表面《ひょうめん》がツルツルか、デコボコかで、飛び方《かた》が変《か》わりそうだね。',
+  choices:[
+   {t:'ボールを曲《ま》げたり、よく飛《と》ばしたりするため',ok:true,c:'そう！縫い目が空気の流《なが》れを変えて、曲がる球《たま》を投《な》げられるんだ。'},
+   {t:'見《み》た目《め》をかっこよくするため',ok:false,c:'おしい！かざりではなくて、いちばんの理由《りゆう》は「飛び方」を変えることなんだ。'},
+   {t:'ボールをじょうぶにするため',ok:false,c:'近《ちか》いね。でも、縫い目のいちばんの役《やく》わりは、ボールの飛び方を変えることだよ。'}],
+  a:'縫い目があると、ボールのまわりの空気の流れが変わり、回転《かいてん》によってボールが曲がったり、のびたりする。ピッチャーはこの縫い目を使《つか》って、まっすぐに見えて曲がる「変化球《へんかきゅう》」を投げられるんだ。',
+  views:['「投げる人」の見方：縫い目があるから、いろんな球種《きゅうしゅ》が投げられる。','「打《う》つ人」の見方：縫い目で曲がるから、打つのがむずかしくなる。','もし縫い目がなかったら、ボールはまっすぐ飛ぶだけで、野球はもっと単純《たんじゅん》なゲームになっていたかもしれないね。']},
+ {q:'なぜ、走《はし》ったあとは心臓《しんぞう》がドキドキ速《はや》くなるのだろう？',
+  think:'体《からだ》をいっぱい動《うご》かすと、体の中《なか》では何《なに》がたくさん必要《ひつよう》になるか考《かんが》えてみよう。',
+  choices:[
+   {t:'体が酸素《さんそ》をたくさん必要とするから',ok:true,c:'せいかい！心臓は、酸素を運《はこ》ぶ血《ち》を急《いそ》いで全身《ぜんしん》に送《おく》っているんだ。'},
+   {t:'こわくてきんちょうしているから',ok:false,c:'きんちょうでもドキドキするけど、運動《うんどう》のあとのドキドキは理由がちがうよ。'},
+   {t:'体が熱《あつ》くなりすぎたから',ok:false,c:'熱くもなるけど、ドキドキの直《ちょく》せつの理由は「酸素を送ること」なんだ。'}],
+  a:'運動すると、体の筋肉《きんにく》がたくさんの酸素を必要とする。心臓は、酸素を運ぶ血をすばやく全身に送るために、速く動いてポンプの働《はたら》きを強《つよ》めているんだ。',
+  views:['体のしくみで見ると：心臓はがんばって酸素を届《とど》けている。','見方を変えると：ドキドキは、体が一生《いっしょう》けんめい働いているしるし。','運動を続《つづ》けると心臓が強くなり、同《おな》じ運動でもドキドキしにくくなる。これが「体力がつく」ということなんだ。']},
+ {q:'なぜ、プロ選手《せんしゅ》は試合《しあい》の前《まえ》に必《かなら》ず準備運動《じゅんびうんどう》をするのだろう？',
+  think:'つめたくてかたい体で、いきなり全力《ぜんりょく》で走《はし》ったら、体はどうなりそうかな？',
+  choices:[
+   {t:'ケガを防《ふせ》いで、力《ちから》を出《だ》しやすくするため',ok:true,c:'その通《とお》り！体を温《あたた》めると筋肉《きんにく》がやわらかくなって、よく動くんだ。'},
+   {t:'試合の時間《じかん》をのばすため',ok:false,c:'それはちがうね。準備運動は、自分《じぶん》の体のためにやるんだよ。'},
+   {t:'あいてをまたせるため',ok:false,c:'ちがうけど、考えたのはえらい！本当《ほんとう》は自分の体を守《まも》るためなんだ。'}],
+  a:'急《きゅう》に体を激《はげ》しく動かすと、筋肉や関節《かんせつ》をいためやすい。準備運動で体を温め、筋肉をやわらかくしておくと、ケガを防ぎ、力も出しやすくなるんだ。',
+  views:['ケガを防ぐ見方：温めた体は、のびちぢみしやすい。','力を出す見方：温まった筋肉は、よく動く。','プロほど準備を大切《たいせつ》にする。一流《いちりゅう》の人ほど「あたりまえのこと」をていねいにやるんだね。']},
+ {q:'なぜ、夜《よる》の野球場《やきゅうじょう》はあんなに明《あか》るいのに、選手《せんしゅ》のかげが何本《なんぼん》もできるのだろう？',
+  think:'かげは、光《ひかり》がさえぎられたところにできるよね。明かりはいくつあるか思《おも》い出《だ》してみよう。',
+  choices:[
+   {t:'明かりが、いろんな方向《ほうこう》にたくさんあるから',ok:true,c:'せいかい！光が当《あ》たる方向の数《かず》だけ、かげができるんだ。'},
+   {t:'月《つき》の光《ひかり》のせい',ok:false,c:'おしい！でも、あんなに明るいのは月ではなく、たくさんの照明《しょうめい》のおかげだよ。'},
+   {t:'選手がたくさんいるから',ok:false,c:'人もかげを作《つく》るけど、一人《ひとり》から何本もできる理由《りゆう》は「明かりの数」なんだ。'}],
+  a:'野球場には、たくさんの照明が高《たか》い場所《ばしょ》のいろんな方向についている。光が一つではなく、いくつもの方向から当たるので、その数だけかげができるんだ。',
+  views:['理科の見方：光がさえぎられたところがかげになる。光の数だけかげができる。','くふうの見方：いろんな方向から照らすのは、どこかが暗《くら》くならないようにするため。','もし明かりが一つだけだったら、選手のかげが長《なが》くのびて、プレーしにくくなるね。']},
+ {q:'なぜ、応援《おうえん》されると、いつもより力《ちから》が出《で》る気《き》がするのだろう？',
+  think:'うれしい気持《きも》ちや「がんばろう」という気持ちは、体《からだ》に何《なに》かえいきょうをあたえるのかな？',
+  choices:[
+   {t:'やる気《き》が高《たか》まって、体も動《うご》きやすくなるから',ok:true,c:'そう！気持ちの力《ちから》は、本当《ほんとう》に体を動かすことが研究《けんきゅう》でわかっているんだ。'},
+   {t:'気《き》のせいで、本当《ほんとう》は変《か》わらない',ok:false,c:'じつは気のせいじゃなくて、本当に動きやすくなるんだよ。'},
+   {t:'あいてが弱《よわ》くなるから',ok:false,c:'あいては変わらないね。変わるのは、自分《じぶん》の力なんだ。'}],
+  a:'応援されると、うれしい気持ちや「がんばろう」という気持ちが強《つよ》くなる。心《こころ》の力が体の力を引《ひ》き出すことがあり、これは気のせいだけでなく、本当に体が動きやすくなることが研究でわかっている。',
+  views:['心の見方：応援は、やる気のスイッチを入《い》れてくれる。','体の見方：やる気が高まると、体も実《じっ》さいに動きやすくなる。','だから、自分が応援する側《がわ》になることも、だれかの力になれるんだね。']},
+ {q:'なぜ、バットの「しん」に当《あ》たると、いちばん遠《とお》くへ飛《と》ぶのだろう？',
+  think:'同《おな》じ力《ちから》でも、手《て》にビリビリが残《のこ》る当たり方《かた》と、気持《きも》ちよく飛ぶ当たり方があるね。',
+  choices:[
+   {t:'力《ちから》が、きれいにボールへ伝《つた》わる場所《ばしょ》だから',ok:true,c:'その通《とお》り！しんに当たると、力がにげずにボールへ伝わるんだ。'},
+   {t:'バットがいちばん重《おも》い場所《ばしょ》だから',ok:false,c:'重さではないんだ。力がうまく伝わる「ちょうどよい点《てん》」のことだよ。'},
+   {t:'ボールが軽《かる》くなる場所《ばしょ》だから',ok:false,c:'ボールは変《か》わらないよ。でも、よく考《かんが》えたね！'}],
+  a:'バットには、当たったときに手にビリビリがいちばん伝わらず、ボールに力がきれいに伝わる「ちょうどよい点」がある。これを「しん（スイートスポット）」という。ここに当てると、力がむだなくボールに伝わって、遠くへ飛ぶんだ。',
+  views:['力の見方：しんに当たると、力がにげずにボールに伝わる。','感覚《かんかく》の見方：しんに当たると、手にショックが少《すく》なく、気持ちよく打《う》てる。','プロ選手は、この小《ちい》さな点に当てる練習《れんしゅう》を、何千回《なんぜんかい》もくり返《かえ》しているんだよ。']},
+ {q:'なぜ、チームには「キャプテン」が必要《ひつよう》なのだろう？',
+  think:'たくさんの人《ひと》が、それぞれ好《す》きな方向《ほうこう》にばらばらに動《うご》いたら、どうなるか想像《そうぞう》してみよう。',
+  choices:[
+   {t:'みんなをまとめて、方向《ほうこう》を決《き》める人《ひと》がいるとまとまるから',ok:true,c:'せいかい！リーダーがいると、みんなが同《おな》じ方向を向《む》けて、チームが強《つよ》くなるんだ。'},
+   {t:'いちばん上手《じょうず》な人《ひと》がえらいから',ok:false,c:'上手さよりも、みんなをまとめる力《ちから》が大事《だいじ》なんだ。'},
+   {t:'ルールで決《き》まっているから',ok:false,c:'ルールというより、みんなが力を合《あ》わせるために必要なんだよ。'}],
+  a:'たくさんの人が力を合わせるには、みんなをまとめ、方向を決める人が必要だ。キャプテンは、チームの気持ちを一つにし、こまったときに声《こえ》をかける役目《やくめ》を持《も》っている。リーダーがいると、チームは強くまとまるんだ。',
+  views:['まとめる見方：キャプテンがいると、みんなが同じ方向を向ける。','支《ささ》える見方：キャプテンは、なかまをはげます役目もある。','でも、キャプテン一人にたよりきりではなく、全員《ぜんいん》がリーダーの気持ちを持つチームが、いちばん強いとも言《い》えるね。']},
+],
+nature:[
+ {q:'なぜ、空《そら》は青《あお》いのだろう？',
+  think:'太陽《たいよう》の光《ひかり》には、じつは赤《あか》・青《あお》・黄《き》など、いろんな色《いろ》がまざっているよ。',
+  choices:[
+   {t:'青《あお》い光《ひかり》が、空気《くうき》にぶつかって広《ひろ》がるから',ok:true,c:'せいかい！青い光が四方《しほう》に散《ち》らばって、空全体《ぜんたい》が青く見《み》えるんだ。'},
+   {t:'空《そら》が青《あお》くぬられているから',ok:false,c:'空にはぬられていないよ。これは光のひみつなんだ。'},
+   {t:'青《あお》い海《うみ》がうつっているから',ok:false,c:'うつっているわけではないんだ。でも、よく考《かんが》えたね！'}],
+  a:'太陽の光にはいろんな色がふくまれている。その中《なか》で青い光は、空気の小《ちい》さなつぶにぶつかって、四方八方《しほうはっぽう》に広がりやすい。だから、空全体が青く見えるんだ。',
+  views:['理科の見方：青い光が空気にぶつかって散らばるから、青く見える。','時間《じかん》で変《か》わる見方：夕方《ゆうがた》は光が長《なが》い道《みち》のりを通《とお》るので、赤い光が残《のこ》って夕焼《ゆうや》けになる。','同《おな》じ空でも、朝《あさ》・昼《ひる》・夕方で色が変わる。なぜ変わるのか考えると、もっとおもしろいね。']},
+ {q:'なぜ、氷《こおり》は水《みず》にうかぶのだろう？',
+  think:'ふつう、かたいものは水にしずむことが多《おお》いのに、氷はうかぶ。同《おな》じ量《りょう》の水と氷で、どちらが重《おも》いかな？',
+  choices:[
+   {t:'氷《こおり》は、水《みず》より軽《かる》くなるから',ok:true,c:'その通《とお》り！水はこおると体積《たいせき》が増《ふ》えて、同じ大《おお》きさなら軽くなるんだ。'},
+   {t:'氷《こおり》の中《なか》に空気《くうき》が入《はい》っているから',ok:false,c:'空気が入ることもあるけど、いちばんの理由《りゆう》は「水より軽くなる」ことだよ。'},
+   {t:'水《みず》が氷《こおり》をおし上《あ》げているから',ok:false,c:'近《ちか》いね！軽いものは水にうかぶ、というのが答《こた》えだよ。'}],
+  a:'水はこおると、つぶのならび方《かた》がすき間《ま》の多《おお》い形《かたち》になり、同じ重さでも体積が大きくなる。軽くなるから、水にうかぶんだ。これはとてもめずらしい性質《せいしつ》なんだよ。',
+  views:['理科の見方：こおると軽くなるから、うかぶ。','自然《しぜん》の見方：氷が水面《すいめん》にうかぶおかげで、池《いけ》の底《そこ》の生《い》き物《もの》は冬《ふゆ》でも生きられる。','もし氷が水にしずんでいたら、池や湖《みずうみ》は底からこおって、生き物がすめなかったかもしれないね。']},
+ {q:'なぜ、植物《しょくぶつ》は水《みず》と太陽《たいよう》だけで大《おお》きくなれるのだろう？',
+  think:'動物《どうぶつ》は食《た》べ物《もの》を食べて大きくなるね。植物は、もしかすると自分《じぶん》で食べ物を作《つく》っているのかも？',
+  choices:[
+   {t:'葉《は》が光《ひかり》を使《つか》って、自分《じぶん》で栄養《えいよう》を作《つく》るから',ok:true,c:'せいかい！これを「光合成《こうごうせい》」というんだ。植物だけのすごい力《ちから》だよ。'},
+   {t:'土《つち》をすこしずつ食《た》べているから',ok:false,c:'土は食べないんだ。植物は、光で自分の栄養を作っているんだよ。'},
+   {t:'水《みず》だけで生《い》きているから',ok:false,c:'水も大事《だいじ》だけど、光がないと栄養が作れないんだ。'}],
+  a:'植物は、葉に太陽の光を受《う》けて、水と空気《くうき》から自分で栄養を作ることができる。これを「光合成」という。動物にはできない、植物だけのすごい力なんだ。',
+  views:['しくみの見方：植物は太陽の光を使って、自分で食べ物を作る。','地球《ちきゅう》全体《ぜんたい》の見方：そのとき出《で》る酸素《さんそ》を、わたしたちは呼吸《こきゅう》に使っている。','つまり、植物がいなければ動物も生きられない。植物は地球のえん通《つう》の下《した》ささえなんだね。']},
+ {q:'なぜ、月《つき》は形《かたち》が変《か》わって見《み》えるのだろう？',
+  think:'月は自分《じぶん》で光《ひか》っているのかな？それとも、何《なに》かの光を受《う》けて光っているのかな？',
+  choices:[
+   {t:'太陽《たいよう》の光《ひかり》が当《あ》たる場所《ばしょ》が、変《か》わって見《み》えるから',ok:true,c:'その通《とお》り！月は太陽の光を受けて光っていて、光る部分《ぶぶん》が日《ひ》によって変わるんだ。'},
+   {t:'月《つき》そのものが欠《か》けたり、元《もと》にもどったりするから',ok:false,c:'月そのものは欠けていないんだ。光の当たり方《かた》が変わるだけだよ。'},
+   {t:'雲《くも》がかくしているから',ok:false,c:'雲のときもあるけど、形が決《き》まって変わるのは、光のせいなんだ。'}],
+  a:'月は自分で光っているのではなく、太陽の光を受けてかがやいている。地球から見ると、月のどこに光が当たっているかが日によって変わるので、形が変わって見えるんだ。',
+  views:['理科の見方：太陽に照《て》らされた部分だけが光って見える。','動《うご》きの見方：月が地球のまわりを回《まわ》るので、見える形が変わる。','満月《まんげつ》や三日月《みかづき》など、いろんな形を「いつ見えるか」観察《かんさつ》すると、月の動きがわかってくるよ。']},
+ {q:'なぜ、けがをすると、かさぶたができるのだろう？',
+  think:'体《からだ》は、自分《じぶん》で自分を直《なお》す力《ちから》を持《も》っているよ。かさぶたの下《した》では、何《なに》が起《お》きているのかな？',
+  choices:[
+   {t:'血《ち》が固《かた》まって、傷口《きずぐち》にふたをするから',ok:true,c:'せいかい！ばいきんが入《はい》るのを防《ふせ》ぎ、その下で新《あたら》しい皮ふ《ひふ》を作《つく》っているんだ。'},
+   {t:'ばいきんが集《あつ》まって固《かた》まったから',ok:false,c:'ばいきんではないんだ。かさぶたは、傷を守《まも》る大事《だいじ》なふたなんだよ。'},
+   {t:'皮ふ《ひふ》がやけたから',ok:false,c:'やけどとはちがうんだ。でも、考《かんが》えたのがえらい！'}],
+  a:'けがをして血が出《で》ると、血が固まって傷口にふたをする。これがかさぶただ。ばいきんが入るのを防ぎ、その下で新しい皮ふが作られている。体が自分で傷を直しているしるしなんだ。',
+  views:['体の見方：かさぶたは、傷を守る天然《てんねん》のばんそうこう。','がまんの見方：はがしたくなるけれど、はがすと直りがおそくなる。','体には、自分で自分を治《なお》す力がそなわっている。これってすごいことだね。']},
+ {q:'なぜ、海《うみ》の水《みず》はしょっぱいのだろう？',
+  think:'川《かわ》の水《みず》はしょっぱくないのに、海はしょっぱい。雨《あめ》や川が、長《なが》い長い年月《ねんげつ》、何《なに》を運《はこ》び続《つづ》けているか考《かんが》えてみよう。',
+  choices:[
+   {t:'川《かわ》が運《はこ》んだ塩《しお》が、長《なが》い年月《ねんげつ》で海《うみ》にたまったから',ok:true,c:'その通《とお》り！海の水は蒸発《じょうはつ》しても塩は残《のこ》るので、どんどんたまっていったんだ。'},
+   {t:'だれかが海《うみ》に塩《しお》を入《い》れたから',ok:false,c:'だれも入れていないよ。自然《しぜん》に、長い時間《じかん》をかけてたまったんだ。'},
+   {t:'海《うみ》の魚《さかな》が塩《しお》を出《だ》すから',ok:false,c:'魚ではないんだ。川と長い時間が、しょっぱさのひみつだよ。'}],
+  a:'雨が陸《りく》の岩《いわ》や土《つち》から、わずかな塩のもとをとかして川へ運び、川は海へ流《なが》れこむ。海の水は蒸発しても塩は残るので、長い長い年月をかけて、塩がどんどんたまっていったんだ。',
+  views:['理科の見方：水は蒸発しても塩は残るから、海にたまっていく。','時間の見方：これは何億年《なんおくねん》もかけて起《お》きたこと。','川は海へ塩を運び続けているので、海は今《いま》も少《すこ》しずつしょっぱくなっていると考えることもできるね。']},
+ {q:'なぜ、虫《むし》は光《ひかり》に集《あつ》まってくるのだろう？',
+  think:'夜《よる》の虫《むし》は、もともと何《なに》を目印《めじるし》にまっすぐ飛《と》んでいるのかな。電灯《でんとう》ができる前《まえ》の夜空《よぞら》を想像《そうぞう》してみよう。',
+  choices:[
+   {t:'光《ひかり》を月《つき》とまちがえて、向《む》かってくるから',ok:true,c:'せいかい！虫は月の光を目印に飛ぶので、強《つよ》い電灯を月とかんちがいしてしまうんだ。'},
+   {t:'光《ひかり》が好《す》きで、遊《あそ》びに来《く》るから',ok:false,c:'遊びではないんだ。目印とかんちがいして集まってしまうんだよ。'},
+   {t:'光《ひかり》があたたかいから',ok:false,c:'あたたかさよりも、「目印」とまちがえることが、いちばんの理由《りゆう》なんだ。'}],
+  a:'夜の虫は、もともと月の光を目印にまっすぐ飛ぶ習性《しゅうせい》があると言《い》われている。電灯などの強い光を月とまちがえて、そこへ向かって集まってしまうと考えられているんだ。',
+  views:['しくみの見方：虫は光を方角《ほうがく》の目印にしている。','人間《にんげん》との関係《かんけい》の見方：人の作った明かりが、虫をまよわせている。','では、虫をまよわせない明かりは作れないだろうか?――こんなふうに「どうすればいいか」を考えるのも大切《たいせつ》だね。']},
+],
+mecha:[
+ {q:'なぜ、自転車《じてんしゃ》は走《はし》っているとたおれないのだろう？',
+  think:'止《と》まっている自転車《じてんしゃ》はすぐたおれるのに、走るとたおれない。タイヤが回《まわ》っていることに注目《ちゅうもく》してみよう。',
+  choices:[
+   {t:'タイヤの回転《かいてん》と、人《ひと》のバランスで保《たも》たれるから',ok:true,c:'その通《とお》り！回転には姿勢《しせい》を保とうとする力《ちから》があり、人も無意識《むいしき》にバランスをとっているんだ。'},
+   {t:'スピードで、体《からだ》がうきあがるから',ok:false,c:'ういてはいないんだ。回転とバランスが、たおれないひみつだよ。'},
+   {t:'重《おも》いから、たおれにくい',ok:false,c:'重さではないんだ。重くても、止まればたおれてしまうよね。'}],
+  a:'タイヤが回転していると、その回転が自転車をまっすぐ保とうとする力を生《う》む。さらに、人がバランスをとってハンドルを細《こま》かく動《うご》かすことで、たおれずに進《すす》めるんだ。止まると、この力がなくなるからたおれやすい。',
+  views:['理科の見方：回転には、姿勢を保とうとする力がある。','体の見方：人も無意識にバランスをとっている。','コマが回っている間《あいだ》たおれないのも、同《おな》じしくみ。身近《みぢか》なところに同じ理由《りゆう》がかくれているね。']},
+ {q:'なぜ、冷《ひ》えたコップのまわりに、水《みず》のつぶがつくのだろう？',
+  think:'目《め》に見《み》えないけれど、空気《くうき》の中《なか》にはたくさんの水《みず》（水蒸気《すいじょうき》）がふくまれているよ。それが冷《ひ》やされると…？',
+  choices:[
+   {t:'空気《くうき》の中《なか》の水分《すいぶん》が、冷《ひ》えて水《みず》になるから',ok:true,c:'せいかい！コップの中身《なかみ》がもれたわけじゃなくて、空気中《くうきちゅう》の水分が水つぶになったんだ。'},
+   {t:'コップから、水《みず》がしみ出《だ》したから',ok:false,c:'しみ出てはいないんだ。つくのは、空気の中の水分なんだよ。'},
+   {t:'コップが、少《すこ》しとけたから',ok:false,c:'とけてはいないよ。でも、よく考《かんが》えたね！'}],
+  a:'空気の中には、目に見えない水分（水蒸気）がふくまれている。冷たいコップにふれると、空気が冷やされて、水分が小《ちい》さな水のつぶに変《か》わる。これがコップの外側《そとがわ》につくんだ。中身がもれているわけではないんだよ。',
+  views:['理科の見方：冷えると、空気中の水分が水つぶになる。','かんちがいしやすい見方：コップから水がしみ出たわけではない。','雲《くも》や朝《あさ》つゆができるのも、同《おな》じしくみ。一つわかると、いろんなことがつながるね。']},
+ {q:'なぜ、磁石《じしゃく》は鉄《てつ》をくっつけるのに、紙《かみ》やプラスチックはくっつかないのだろう？',
+  think:'磁石《じしゃく》がくっつくものと、くっつかないものをよく思《おも》い出《だ》してみよう。何《なに》でできているかがちがうね。',
+  choices:[
+   {t:'鉄《てつ》など、一部《いちぶ》の金属《きんぞく》だけを引《ひ》きつける力《ちから》があるから',ok:true,c:'その通《とお》り！紙やプラスチックは、その力に反応《はんのう》しない材料《ざいりょう》なんだ。'},
+   {t:'重《おも》いものは、何《なん》でもくっつくから',ok:false,c:'重さは関係《かんけい》ないんだ。鉄《てつ》かどうかが大事《だいじ》だよ。'},
+   {t:'磁石《じしゃく》が、ねばねばしているから',ok:false,c:'ねばねばではないんだ。これは目《め》に見《み》えない磁石の力なんだよ。'}],
+  a:'磁石は、鉄などの一部の金属だけを引きつける力を持《も》っている。紙やプラスチックは、その力に反応しない材料なので、くっつかないんだ。同《おな》じ金属でも、アルミなどはくっつかないものもあるよ。',
+  views:['理科の見方：磁石は鉄などにだけ働《はたら》く。','身近《みぢか》な見方：だから、冷《れい》ぞう庫《こ》のドア（鉄）にはマグネットがつく。','身のまわりの「くっつくもの・くっつかないもの」をさがすと、何が鉄でできているかわかって楽《たの》しいよ。']},
+ {q:'なぜ、船《ふね》は鉄《てつ》でできているのに、しずまないのだろう？',
+  think:'鉄《てつ》のかたまりは水《みず》にしずむのに、船《ふね》はうかぶ。船の「形《かたち》」と、その中《なか》の空《から》っぽの部分《ぶぶん》に注目《ちゅうもく》してみよう。',
+  choices:[
+   {t:'中《なか》が空《から》っぽで、水《みず》より軽《かる》くなる形《かたち》だから',ok:true,c:'せいかい！船と中の空気《くうき》を合《あ》わせると、同《おな》じ大《おお》きさの水より軽くなるんだ。'},
+   {t:'鉄《てつ》は、もともと水《みず》にうくものだから',ok:false,c:'鉄のかたまりはしずむよね。だから、形《かたち》がひみつなんだ。'},
+   {t:'エンジンの力《ちから》で、ういているから',ok:false,c:'エンジンを止《と》めてもうかぶんだ。理由《りゆう》は「形」なんだよ。'}],
+  a:'船は中が空っぽで、大きく広《ひろ》がった形をしている。船と、その中の空気を合わせると、同じ大きさの水より軽くなる。だから、しずまずにうかぶんだ。鉄でも、形を工夫《くふう》すればうかべられる。',
+  views:['理科の見方：水より軽ければうかぶ。形が大事《だいじ》。','くふうの見方：同じ鉄でも、広げて空気をかかえると軽くなる。','鉄のかたまりはしずむのに船はうかぶ。「形を変《か》えると性質《せいしつ》が変わる」って、おもしろいね。']},
+ {q:'なぜ、電子《でんし》レンジは、火《ひ》を使《つか》わないのに食《た》べ物《もの》を温《あたた》められるのだろう？',
+  think:'電子《でんし》レンジで、水分《すいぶん》の多《おお》い食《た》べ物《もの》と、かわいたお皿《さら》とでは、温《あたた》まり方《かた》がちがうよ。何《なに》がカギかな？',
+  choices:[
+   {t:'食《た》べ物《もの》の中《なか》の水分《すいぶん》を、ふるわせて熱《ねつ》を作《つく》るから',ok:true,c:'その通《とお》り！だから、水分の多い食べ物ほどよく温《あたた》まるんだ。'},
+   {t:'中《なか》に、小《ちい》さな火《ひ》があるから',ok:false,c:'火は使っていないんだ。電波《でんぱ》で、食べ物の中の水分を動《うご》かしているんだよ。'},
+   {t:'お皿《さら》が熱《あつ》くなって、伝《つた》わるから',ok:false,c:'お皿はあまり熱くならないよね。だから、食べ物の中の水分がカギなんだ。'}],
+  a:'電子レンジは、目に見えない電波を出《だ》して、食べ物の中の水分をはげしくふるわせる。そのふるえが熱になって、食べ物が内側《うちがわ》から温まるんだ。だから、水分の少《すく》ないお皿はあまり温まらない。',
+  views:['しくみの見方：水分をふるわせて熱を生《う》む。','観察《かんさつ》の見方：水の多い食べ物ほど、よく温まる。','「なぜお皿は温まりにくいのか」を考《かんが》えると、しくみがもっとよくわかるね。']},
+ {q:'なぜ、スマホの画面《がめん》は、指《ゆび》でさわるだけで反応《はんのう》するのだろう？',
+  think:'手《て》ぶくろをしたままだと、画面《がめん》が反応《はんのう》しにくいことがあるね。指《ゆび》には、何《なに》か特別《とくべつ》なものがあるのかな？',
+  choices:[
+   {t:'指《ゆび》が持《も》つ、わずかな電気《でんき》を感《かん》じ取《と》っているから',ok:true,c:'せいかい！だから、電気を通《とお》しにくい手《て》ぶくろだと反応しにくいんだ。'},
+   {t:'指《ゆび》の体温《たいおん》を感《かん》じているから',ok:false,c:'温度《おんど》ではないんだ。指のわずかな電気《でんき》を感じているんだよ。'},
+   {t:'指《ゆび》の力《ちから》で、強《つよ》くおしているから',ok:false,c:'強くおさなくても反応するよね。だから、力ではなく電気がカギなんだ。'}],
+  a:'スマホなどの画面は、人《ひと》の指が持つわずかな電気を感じ取るしくみになっている。指がふれた場所《ばしょ》の電気の変化《へんか》を読《よ》みとって、「ここがおされた」と判断《はんだん》しているんだ。だから、手ぶくろだと反応しにくいことがある。',
+  views:['しくみの見方：指のわずかな電気を感じている。','観察の見方：手ぶくろやつめの先《さき》では反応しにくい。','「なぜ手ぶくろだと使《つか》えないのか」を考えると、しくみが見《み》えてくるね。']},
+ {q:'なぜ、QRコードは、あの小《ちい》さな白黒《しろくろ》もようで、いろんな情報《じょうほう》を伝《つた》えられるのだろう？',
+  think:'白《しろ》と黒《くろ》のマスを、「０」と「１」のような合図《あいず》のかわりに使《つか》っていると考《かんが》えてみよう。',
+  choices:[
+   {t:'白黒《しろくろ》のマスを、記号《きごう》として情報《じょうほう》を表《あらわ》しているから',ok:true,c:'その通《とお》り！カメラがマスのならびを読《よ》みとって、もとの情報に組《く》み立《た》て直《なお》すんだ。'},
+   {t:'絵《え》の中《なか》に、文字《もじ》がかくれているから',ok:false,c:'文字がかくれているわけではないんだ。白と黒の組み合《あ》わせが合図《あいず》になっているんだよ。'},
+   {t:'いろんな色《いろ》で、情報《じょうほう》を伝《つた》えているから',ok:false,c:'白と黒だけで伝えているんだ。色を使わないのに、すごい工夫《くふう》だね。'}],
+  a:'QRコードは、白と黒のマスを「0」と「1」のような合図として使い、その組み合わせで文字やアドレスを表している。カメラがマスのならびを読みとって、もとの情報に組み立て直しているんだ。',
+  views:['しくみの見方：白黒のマスが、情報を表す記号になっている。','便利《べんり》さの見方：小さくても、たくさんの情報をのせられる。','文字を「白黒のもよう」に置《お》きかえる発想《はっそう》がすごいね。世界《せかい》はいろんな工夫でできている。']},
+],
+history:[
+ {q:'なぜ、昔《むかし》の人《ひと》はお城《しろ》のまわりに、ほり（水《みず》）を作《つく》ったのだろう？',
+  think:'お城《しろ》は、敵《てき》がせめてくる場所《ばしょ》だね。まわりに水《みず》があると、敵《てき》はどうなるか想像《そうぞう》してみよう。',
+  choices:[
+   {t:'敵《てき》が近《ちか》づきにくくして、お城《しろ》を守《まも》るため',ok:true,c:'せいかい！水があるとこえるのに時間《じかん》がかかり、橋《はし》を落《お》とせば敵を止《と》められるんだ。'},
+   {t:'魚《さかな》をかって、食《た》べるため',ok:false,c:'魚のためではないんだ。ほりは、お城を守るための工夫《くふう》だよ。'},
+   {t:'水《みず》あそびをするため',ok:false,c:'あそびではないね。でも、考《かんが》えたのがえらい！'}],
+  a:'ほりは、敵がかんたんにお城に近づけないようにするための備《そな》えだ。水があると、こえるのに時間がかかり、橋を落とせば敵を止められる。お城は、こうした工夫をいくつも重《かさ》ねて守りを固《かた》めていたんだ。',
+  views:['守りの見方：ほりは、敵の進入《しんにゅう》をおくらせる。','くらしの見方：ほりの水は、火事《かじ》のときに使《つか》うこともできた。','一つのものに、いくつもの役目《やくめ》を持《も》たせる。昔の人の知恵《ちえ》はかしこいね。']},
+ {q:'なぜ、昔《むかし》の人《ひと》は、文字《もじ》を発明《はつめい》したのだろう？',
+  think:'話《はな》した言葉《ことば》は、その場《ば》ですぐ消《き》えてしまうね。それでこまることは、何《なに》だろう？',
+  choices:[
+   {t:'考《かんが》えや約束《やくそく》を、遠《とお》くや先《さき》の時代《じだい》に伝《つた》えるため',ok:true,c:'その通《とお》り！文字のおかげで、人《ひと》は知識《ちしき》を積《つ》み重《かさ》ねられるようになったんだ。'},
+   {t:'絵《え》をかくのが、すきだったから',ok:false,c:'絵とはちがうんだ。文字は、考えを「伝えて残《のこ》す」ための発明だよ。'},
+   {t:'ひまだったから',ok:false,c:'ひまだったからではないんだ。どうしても必要《ひつよう》だったから生《う》まれたんだよ。'}],
+  a:'話した言葉は、その場で消えてしまう。文字があれば、考えたことや約束を、遠くの人や、ずっと先の時代の人にも伝えられる。文字のおかげで、人は知識を積み重ね、文明《ぶんめい》を発展《はってん》させてきたんだ。',
+  views:['伝える見方：文字は、時間と場所《ばしょ》をこえて考えを残せる。','学《まな》ぶ見方：昔の人の知識を、今《いま》のわたしたちが学べるのも文字のおかげ。','もし文字がなかったら、毎回《まいかい》ゼロからやり直《なお》し。文字は人類《じんるい》の大発明なんだね。']},
+ {q:'なぜ、昔《むかし》のお金《かね》は貝《かい》や石《いし》だったのに、今《いま》は紙《かみ》や金属《きんぞく》なのだろう？',
+  think:'お金《かね》は、物《もの》と物を交《こう》かんするための道具《どうぐ》だね。たくさん持《も》ち運《はこ》ぶなら、どんなお金がべんりかな？',
+  choices:[
+   {t:'持《も》ち運《はこ》びやすく、数《かぞ》えやすいものが便利《べんり》だから',ok:true,c:'せいかい！みんなが「これは使《つか》える」と信《しん》じることも、お金には大事《だいじ》なんだ。'},
+   {t:'貝《かい》や石《いし》が、なくなったから',ok:false,c:'なくなったからではないんだ。もっと便利なものに変《か》わっていったんだよ。'},
+   {t:'紙《かみ》のほうが、きれいだから',ok:false,c:'見《み》た目《め》より、使いやすさが理由《りゆう》なんだ。'}],
+  a:'お金は、物と物を交かんするときに、みんなが「ねうちがある」と信じて使う道具だ。昔はめずらしい貝などが使われたが、持ち運びやすく、数えやすいものが便利なので、だんだん紙や金属に変わっていったんだ。',
+  views:['便利さの見方：軽《かる》くて数えやすいお金のほうが使いやすい。','信用《しんよう》の見方：みんなが「使える」と信じるから、お金として成《な》り立《た》つ。','今は、目に見えないデジタルのお金も増《ふ》えている。お金の形《かたち》は、時代《じだい》とともに変わり続《つづ》けているんだね。']},
+ {q:'なぜ、世界《せかい》には、いろいろな言葉《ことば》（言語《げんご》）があるのだろう？',
+  think:'大昔《おおむかし》、人々《ひとびと》は世界《せかい》のいろいろな場所《ばしょ》に分《わ》かれてくらすようになった。遠《とお》くはなれた人どうしの言葉は、どうなるかな？',
+  choices:[
+   {t:'はなれてくらすうちに、言葉《ことば》がそれぞれ変化《へんか》したから',ok:true,c:'その通《とお》り！長《なが》い年月《ねんげつ》の中《なか》で、言葉が別々《べつべつ》に変わっていったんだ。'},
+   {t:'わざと、ちがう言葉《ことば》にしたから',ok:false,c:'わざとではないんだ。はなれてくらすうちに、自然《しぜん》に変《か》わっていったんだよ。'},
+   {t:'神様《かみさま》が、決《き》めたから',ok:false,c:'考《かんが》えたのはえらい！本当《ほんとう》は、はなれてくらしたことが理由《りゆう》なんだ。'}],
+  a:'大昔、人々は世界のいろいろな場所に分かれてくらすようになった。遠くはなれた土地《とち》では、長い年月の中で言葉がそれぞれ変化していき、たくさんの言語が生まれたと考えられているんだ。',
+  views:['歴史《れきし》の見方：はなれてくらすうちに、言葉がそれぞれ変化した。','文化《ぶんか》の見方：言葉がちがうと、考え方や文化のちがいも生まれる。','ちがう言葉を学《まな》ぶと、ちがう世界の見方を知《し》ることができる。だから外国語《がいこくご》の勉強《べんきょう》はおもしろいんだね。']},
+ {q:'なぜ、人《ひと》は争《あらそ》いをやめて、ルール（法律《ほうりつ》）を作《つく》るようになったのだろう？',
+  think:'もし、だれもが自分《じぶん》の好《す》きかってにふるまったら、強《つよ》い人《ひと》と弱《よわ》い人《ひと》は、それぞれどうなるだろう？',
+  choices:[
+   {t:'みんなが安心《あんしん》してくらせるように、決《き》めた約束《やくそく》だから',ok:true,c:'せいかい！ルールは、弱い人も守《まも》るための大切《たいせつ》な工夫《くふう》なんだ。'},
+   {t:'えらい人《ひと》が、いばるため',ok:false,c:'いばるためではないんだ。みんなを同《おな》じように守るためだよ。'},
+   {t:'むかしから、あるから',ok:false,c:'ただ昔《むかし》からあるのではなく、必要《ひつよう》だから作られたんだ。'}],
+  a:'みんながすきかってにふるまうと、強い者《もの》だけが得《とく》をして、弱い者が困《こま》ってしまう。そこで人は、だれもが安心してくらせるように、みんなで守る約束＝ルールを作った。ルールは、弱い人も守るための工夫なんだ。',
+  views:['公平《こうへい》の見方：ルールは、みんなを同じように守る。','安心の見方：ルールがあるから、安心してくらせる。','「なぜこのルールがあるのか」を考《かんが》えると、ルールの大切さがわかる。決《き》まりには理由《りゆう》があるんだね。']},
+ {q:'なぜ、昔《むかし》の人《ひと》は、星《ほし》の動《うご》きをくわしく調《しら》べたのだろう？',
+  think:'カレンダーも時計《とけい》もない時代《じだい》を想像《そうぞう》してみよう。いつ種《たね》をまけばいいか、どうやって知《し》ったのかな？',
+  choices:[
+   {t:'季節《きせつ》を知《し》って、農業《のうぎょう》や航海《こうかい》に役立《やくだ》てるため',ok:true,c:'その通《とお》り！星の動きは、時計もカレンダーもない時代の大切《たいせつ》な知恵《ちえ》だったんだ。'},
+   {t:'星《ほし》がきれいだから、見《み》ていただけ',ok:false,c:'ながめるだけではなく、生活《せいかつ》に役立てていたんだ。'},
+   {t:'ひまつぶしのため',ok:false,c:'ひまつぶしではないよ。生《い》きるために必要《ひつよう》な観察《かんさつ》だったんだ。'}],
+  a:'昔は時計もカレンダーもなかった。人々は、星や太陽《たいよう》の動きを調べることで、季節の変《か》わり目《め》を知り、いつ種をまけばよいかを判断《はんだん》していた。星の観察は、生きるために欠《か》かせない知恵だったんだ。',
+  views:['くらしの見方：星で季節を知り、農業に役立てた。','ぼうけんの見方：船乗《ふなの》りは、星を頼《たよ》りに海《うみ》をわたった。','今《いま》は機械《きかい》が教《おし》えてくれることを、昔の人は空《そら》を見《み》て知っていた。人間《にんげん》の知恵ってすごいね。']},
+ {q:'なぜ、わたしたちは学校《がっこう》で勉強《べんきょう》をするのだろう？',
+  think:'今《いま》すぐには役《やく》に立《た》たないことも、大人《おとな》になってから役立《やくだ》つことがある。勉強《べんきょう》で身《み》につく「考《かんが》える力《ちから》」は、いつ使《つか》うかな？',
+  choices:[
+   {t:'将来《しょうらい》、自分《じぶん》で考《かんが》えて選《えら》べる力《ちから》をつけるため',ok:true,c:'その通《とお》り！考える力そのものが、一生《いっしょう》の土台《どだい》になるんだ。'},
+   {t:'テストで、いい点《てん》をとるためだけ',ok:false,c:'点のためだけではないんだ。もっと先《さき》の、自分の人生《じんせい》のためだよ。'},
+   {t:'大人《おとな》に、言《い》われるから',ok:false,c:'言われるからではなく、じつは自分《じぶん》のためになることなんだ。'}],
+  a:'勉強で身につけた読《よ》む力・考える力は、大人になってから、自分で考えて選び、生きていくための土台になる。今すぐ役に立たなくても、いろんな道《みち》に進《すす》むための「えらべる力」を育《そだ》てているんだ。',
+  views:['未来《みらい》の見方：今の学《まな》びは、将来えらべる道を増《ふ》やす。','考える力の見方：知識《ちしき》より、考える力そのものが大事《だいじ》。','「なぜ勉強するのか」を自分で考えられること――それこそが、勉強でいちばん身につけたい力かもしれないね。']},
+],
+};
+
+// ============ CONFIG ============
+const THEMES=[
+  {id:'baseball',e:'⚾',n:'野球・スポーツ'},
+  {id:'nature',e:'🦖',n:'生き物・宇宙'},
+  {id:'mecha',e:'🚀',n:'のりもの・メカ'},
+  {id:'history',e:'⚔️',n:'歴史・冒険'},
+];
+function themeOf(id){return THEMES.find(t=>t.id===id)||THEMES[0];}
+const QUESTS=[
+  {id:'duo', icon:'🦉',name:'Duolingo',     desc:'デイリークエストをクリア', type:'check'},
+  {id:'calc',icon:'🔢',name:'計算',         desc:'小4の問題に5問チャレンジ', type:'activity'},
+  {id:'read',icon:'📖',name:'音読',         desc:'お話を声に出して読もう',   type:'activity'},
+  {id:'write',icon:'✍️',name:'作文',        desc:'穴うめで意見文を完成',     type:'activity'},
+  {id:'sci', icon:'🔬',name:'理科社会のタネ',desc:'今日のなぜ？を考える',     type:'activity'},
+];
+const AOZORA=[
+  {title:'ごん狐',author:'新美南吉',mins:'15分',e:'🦊',url:'https://www.aozora.gr.jp/cards/000121/files/628_14895.html'},
+  {title:'手袋を買いに',author:'新美南吉',mins:'10分',e:'🧤',url:'https://www.aozora.gr.jp/cards/000121/files/637_13341.html'},
+  {title:'注文の多い料理店',author:'宮沢賢治',mins:'15分',e:'🍴',url:'https://www.aozora.gr.jp/cards/000081/card43754.html'},
+  {title:'宮沢賢治「10分で読める」一覧',author:'ブンゴウサーチ',mins:'一覧',e:'📚',url:'https://search.bungo.app/authors/81/categories/shortshort/books'},
+  {title:'青空文庫トップ（名作さがし）',author:'いろんな作家',mins:'',e:'🔎',url:'https://www.aozora.gr.jp/'},
+];
+const PRAISES=['すごい！さいごまで自分の言葉で書けたね！⚾','よく考えて書けたね！えらいよ！🌟','いいね！自分の考えがしっかり伝わってきたよ！👏','がんばって書けたね！その調子！🔥','自分の力で書ききったね！かっこいい！💪'];
+function praise(){return PRAISES[Math.floor(Math.random()*PRAISES.length)];}
+
+// ===== カード =====
+const RARITY={
+  N:{name:'ノーマル',cls:'N',color:'#5f6f85',glow:'rgba(125,141,163,.35)',bg1:'#eef1f5',bg2:'#e4e9f0',stars:1,p:0.50},
+  R:{name:'レア',cls:'R',color:'#1f86b8',glow:'rgba(42,159,214,.4)',bg1:'#e3f3fb',bg2:'#d2ebf7',stars:2,p:0.28},
+  SR:{name:'スーパーレア',cls:'SR',color:'#7044d4',glow:'rgba(130,89,230,.45)',bg1:'#efe9fc',bg2:'#e3d8f9',stars:3,p:0.14},
+  SS:{name:'SSレア',color:'#b8800a',cls:'SS',glow:'rgba(212,154,16,.5)',bg1:'#fdf2d4',bg2:'#fbe9b8',stars:4,p:0.06},
+  LEGEND:{name:'レジェンド',cls:'LG',color:'#cf463b',glow:'rgba(224,85,74,.55)',bg1:'#fde7e4',bg2:'#fbd6d1',stars:5,p:0.02},
+};
+const CARDS=[
+  {id:'n1',name:'ルーキー内野手',pos:'内野手',e:'🧢',r:'N'},
+  {id:'n2',name:'練習生ピッチャー',pos:'投手',e:'⚾',r:'N'},
+  {id:'n3',name:'応援団長',pos:'ベンチ',e:'📣',r:'N'},
+  {id:'n4',name:'バットボーイ',pos:'サポート',e:'🧹',r:'N'},
+  {id:'n5',name:'一年生キャッチャー',pos:'捕手',e:'🥎',r:'N'},
+  {id:'n6',name:'俊足の代走',pos:'外野手',e:'👟',r:'N'},
+  {id:'r1',name:'努力の二塁手',pos:'内野手',e:'💪',r:'R'},
+  {id:'r2',name:'ムードメーカー',pos:'外野手',e:'😆',r:'R'},
+  {id:'r3',name:'堅守のショート',pos:'内野手',e:'🧤',r:'R'},
+  {id:'r4',name:'制球派ピッチャー',pos:'投手',e:'🎯',r:'R'},
+  {id:'r5',name:'代打の切り札',pos:'内野手',e:'🔥',r:'R'},
+  {id:'r6',name:'守備の名手',pos:'外野手',e:'✨',r:'R'},
+  {id:'sr1',name:'四番バッター',pos:'内野手',e:'💥',r:'SR'},
+  {id:'sr2',name:'エースピッチャー',pos:'投手',e:'🌟',r:'SR'},
+  {id:'sr3',name:'盗塁王',pos:'外野手',e:'⚡',r:'SR'},
+  {id:'sr4',name:'鉄壁の正捕手',pos:'捕手',e:'🛡️',r:'SR'},
+  {id:'sr5',name:'天才遊撃手',pos:'内野手',e:'🎯',r:'SR'},
+  {id:'ss1',name:'二刀流のスター',pos:'投手/打者',e:'⚔️',r:'SS'},
+  {id:'ss2',name:'三冠王スラッガー',pos:'内野手',e:'👑',r:'SS'},
+  {id:'ss3',name:'剛速球エース',pos:'投手',e:'🚀',r:'SS'},
+  {id:'ss4',name:'守護神クローザー',pos:'投手',e:'🔒',r:'SS'},
+  {id:'lg1',name:'伝説の大打者',pos:'内野手',e:'🏆',r:'LEGEND'},
+  {id:'lg2',name:'不滅の鉄腕',pos:'投手',e:'💫',r:'LEGEND'},
+  {id:'lg3',name:'世界をわかせた男',pos:'二刀流',e:'🌏',r:'LEGEND'},
+];
+const RARITY_ORDER=['LEGEND','SS','SR','R','N'];
+const MONEY_DIST=[[10,.18],[20,.18],[30,.18],[50,.21],[80,.13],[100,.09],[200,.03]];
+const MONEY_FACES=[10,20,30,50,80,100,200];
+
+const WD=['日','月','火','水','木','金','土'];
+const todayKey=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
+
+// ===== ストレージ（localStorage＋メモリ予備）=====
+const store={mem:{},
+  get(k){try{const v=localStorage.getItem(k);return v===null?(k in this.mem?this.mem[k]:null):v;}catch(e){return k in this.mem?this.mem[k]:null;}},
+  set(k,v){try{localStorage.setItem(k,v);}catch(e){this.mem[k]=v;}},
+  del(k){try{localStorage.removeItem(k);}catch(e){delete this.mem[k];}}
+};
+
+let state={today:todayKey(),checks:{},history:{},calcTier:1,calcStats:{correct:0,wrong:0},sakubunDone:0,log:[],
+  money:0,cards:{},gachaLog:{},seen:{read:[],write:[],sci:[]}};
+
+function load(){
+  const r=store.get('kudan-state-v5');
+  if(r){try{const s=JSON.parse(r);
+    state.history=s.history||{};state.calcTier=s.calcTier||1;
+    state.calcStats=s.calcStats||{correct:0,wrong:0};state.sakubunDone=s.sakubunDone||0;state.log=s.log||[];
+    state.money=s.money||0;state.cards=s.cards||{};state.gachaLog=s.gachaLog||{};
+    state.seen=s.seen||{read:[],write:[],sci:[]};
+    if(!state.seen.read)state.seen.read=[];if(!state.seen.write)state.seen.write=[];if(!state.seen.sci)state.seen.sci=[];
+    if(s.today===todayKey()){state.today=s.today;state.checks=s.checks||{};}
+    else{state.today=todayKey();state.checks={};}
+  }catch(e){}}
+}
+function save(){
+  const done=Object.values(state.checks).filter(Boolean).length;
+  state.history[state.today]={count:done,quests:{...state.checks}};
+  store.set('kudan-state-v5',JSON.stringify(state));
+}
+function addLog(tag,question,answer,extra){
+  state.log.unshift({date:state.today,ts:Date.now(),tag,question,answer,reply:extra});
+  if(state.log.length>200)state.log=state.log.slice(0,200);
+  save();
+}
+function rubyize(t){return (t||'').replace(/([一-龠々〆ヶ]+)《([ぁ-んァ-ヴ]+)》/g,'<ruby>$1<rt>$2</rt></ruby>');}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function stripRuby(s){return (s||'').replace(/《[ぁ-んァ-ヴ]+》/g,'');}
+function geminiBox(promptText){
+  const id='gem'+Math.random().toString(36).slice(2,7);
+  return `<div class="gemini-box">
+    <div class="gb-head">🤖 Gemini先生に見せよう！</div>
+    <div class="gb-sub">書けたら、Gemini先生に見せて、ほめてもらおう！下のボタンでコピーして、Geminiにはりつけて送ってね。</div>
+    <div class="gemini-steps"><div class="gstep">①<br>コピー</div><div class="gstep">②<br>Geminiを開く</div><div class="gstep">③<br>はって送る</div></div>
+    <textarea id="${id}" readonly class="gemini-prompt">${esc(promptText)}</textarea>
+    <button class="btn btn-copy btn-sm" style="margin-top:8px" onclick="copyGemini('${id}')">📋 ぜんぶコピー</button>
+    <div class="copied-note" id="${id}n"></div>
+    <a class="btn btn-gemini btn-sm" style="margin-top:6px" href="https://gemini.google.com/app" target="_blank" rel="noopener">🤖 Gemini先生をひらく ↗</a>
+  </div>`;
+}
+function copyGemini(id){
+  const ta=document.getElementById(id),note=document.getElementById(id+'n');
+  const ok=()=>{note.textContent='✅ コピーしたよ！Geminiにはって送ってね';};
+  const ng=()=>{ta.focus();ta.select();note.textContent='👆上の文をおして「コピー」をえらんでね';};
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(ta.value).then(ok).catch(()=>{try{ta.focus();ta.select();document.execCommand('copy')?ok():ng();}catch(e){ng();}});}
+    else{ta.focus();ta.select();document.execCommand('copy')?ok():ng();}
+  }catch(e){ng();}
+}
+
+// ===== コンテンツ・プール（テーマ横断＋くり返し防止）=====
+const POOLS={read:[],write:[],sci:[]};
+function buildPools(){
+  ['baseball','nature','mecha','history'].forEach(tid=>{
+    (READINGS[tid]||[]).forEach(x=>POOLS.read.push(Object.assign({theme:tid},x)));
+    (WRITINGS[tid]||[]).forEach(x=>POOLS.write.push(Object.assign({theme:tid},x)));
+    (SCIENCE[tid]||[]).forEach(x=>POOLS.sci.push(Object.assign({theme:tid},x)));
+  });
+}
+function pickFromPool(cat){
+  const pool=POOLS[cat];let seen=state.seen[cat]||[];
+  if(seen.length>=pool.length)seen=[];
+  const avail=[];for(let i=0;i<pool.length;i++)if(seen.indexOf(i)<0)avail.push(i);
+  const idx=avail[Math.floor(Math.random()*avail.length)];
+  seen.push(idx);state.seen[cat]=seen;save();
+  return pool[idx];
+}
+
+// ============ RENDER TODAY ============
+function renderQuests(){
+  const list=document.getElementById('questList');list.innerHTML='';
+  QUESTS.forEach(q=>{
+    const done=!!state.checks[q.id];
+    const el=document.createElement('div');
+    el.className='quest'+(done?' done':'');
+    const right = q.type==='activity' && !done
+      ? `<div class="qgo">やる ▶</div>`
+      : `<div class="check"><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
+    el.innerHTML=`<div class="qicon">${q.icon}</div><div class="qbody"><div class="qname">${q.name}</div><div class="qdesc">${q.desc}</div></div>${right}`;
+    el.addEventListener('click',()=>{
+      if(q.type==='check'){toggle(q.id);}
+      else if(done){toggle(q.id);}
+      else{openActivity(q.id);}
+    });
+    list.appendChild(el);
+  });
+}
+function renderTop(){
+  const done=Object.values(state.checks).filter(Boolean).length;
+  document.getElementById('doneNum').textContent=done;
+  document.getElementById('barFill').style.width=(done/5*100)+'%';
+  document.getElementById('streakNum').textContent=calcStreak();
+  document.getElementById('coinTotal').textContent=state.money;
+  const d=new Date();document.getElementById('dateLabel').textContent=`${d.getMonth()+1}月${d.getDate()}日(${WD[d.getDay()]})`;
+  const gb=document.getElementById('gachaBar');
+  const gachaedToday=!!state.gachaLog[state.today];
+  if(done===5){
+    if(gachaedToday){gb.className='gachabar done';const g=state.gachaLog[state.today];
+      document.getElementById('gachaT').innerHTML='🎉 今日のガチャ完了！';
+      document.getElementById('gachaS').innerHTML=`「${g.cardName}」を仲間にして <b>${g.money}円</b> ゲット！ また明日！`;
+    }else{gb.className='gachabar on';
+      document.getElementById('gachaT').innerHTML='🎰 ガチャを回そう！ ▶';
+      document.getElementById('gachaS').textContent='5つクリア達成！ タップでカードガチャ＋お金ルーレット！';}
+  }else{gb.className='gachabar';
+    document.getElementById('gachaT').innerHTML=`⚾ あと ${5-done} つでガチャ！`;
+    document.getElementById('gachaS').textContent='5つぜんぶクリアすると、選手カードガチャ＋お金ルーレットが回せる！';}
+}
+let wasComplete=false;
+function toggle(id){state.checks[id]=!state.checks[id];renderQuests();renderTop();save();checkComplete();}
+function completeQuest(id){if(!state.checks[id]){state.checks[id]=true;renderQuests();renderTop();save();checkComplete(true);}}
+function checkComplete(delay){
+  const done=Object.values(state.checks).filter(Boolean).length;
+  if(done===5&&!wasComplete){wasComplete=true;if(!state.gachaLog[state.today]){setTimeout(openGacha,delay?450:150);}}
+  if(done<5)wasComplete=false;
+}
+function calcStreak(){
+  let streak=0;const d=new Date();
+  for(let i=0;i<400;i++){
+    const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const h=state.history[k];
+    const full=k===state.today?(Object.values(state.checks).filter(Boolean).length===5):(h&&h.count===5);
+    if(full)streak++;else if(k===state.today){}else break;
+    d.setDate(d.getDate()-1);
+  }return streak;
+}
+function bestStreak(){
+  const allFull={};Object.keys(state.history).forEach(k=>{if(state.history[k].count===5)allFull[k]=true;});
+  if(Object.values(state.checks).filter(Boolean).length===5)allFull[state.today]=true;
+  const sorted=Object.keys(allFull).sort();let best=0,cur=0,prev=null;
+  for(const k of sorted){
+    if(prev){const pd=new Date(prev);pd.setDate(pd.getDate()+1);
+      const nk=`${pd.getFullYear()}-${String(pd.getMonth()+1).padStart(2,'0')}-${String(pd.getDate()).padStart(2,'0')}`;
+      cur=nk===k?cur+1:1;}else cur=1;
+    best=Math.max(best,cur);prev=k;
+  }return best;
+}
+
+// ============ GACHA ============
+function drawCard(){
+  const r=Math.random();let acc=0,rarity='N';
+  for(const key of RARITY_ORDER.slice().reverse()){acc+=RARITY[key].p;if(r<acc){rarity=key;break;}}
+  const pool=CARDS.filter(c=>c.r===rarity);
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+function rollMoney(){const r=Math.random();let a=0;for(const [v,p] of MONEY_DIST){a+=p;if(r<a)return v;}return 200;}
+let gachaPending=null;
+function openGacha(){
+  const card=drawCard(),money=rollMoney(),isNew=!state.cards[card.id];
+  gachaPending={card,money,isNew};
+  document.getElementById('gacha').classList.add('show');renderGachaPack();
+}
+function renderGachaPack(){
+  document.getElementById('gachaInner').innerHTML=`
+    <div class="gacha-step">
+      <div class="gacha-h">⚾ 試合に勝った！</div>
+      <div class="gacha-sub">パックをタップして、今日の選手をGET！</div>
+      <div class="pack" id="packEl"><div class="pball">⚾</div><div class="ptap">タップ！</div></div>
+    </div>`;
+  document.getElementById('packEl').addEventListener('click',revealCard,{once:true});
+}
+function revealCard(){
+  const {card,isNew}=gachaPending;const R=RARITY[card.r];
+  beep(440,.1,'triangle');setTimeout(()=>beep(660,.1,'triangle'),80);setTimeout(()=>beep(880,.15,'triangle'),160);
+  if(card.r==='SS'||card.r==='LEGEND'){[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>beep(f,.18,'square',.12),i*90));}
+  document.getElementById('gachaInner').innerHTML=`
+    <div class="gacha-step">
+      <div class="gacha-h" style="color:${R.color}">${R.name}！</div>
+      <div class="gacha-sub">${isNew?'🆕 あたらしい選手だ！':'チームのなかまが強くなった！'}</div>
+      <div class="reveal-card" style="--cardglow:${R.glow};--cardcolor:${R.color};--cardbg1:${R.bg1};--cardbg2:${R.bg2};border-color:${R.color}">
+        ${isNew?'<div class="rc-new">NEW</div>':''}
+        <div class="rc-rar">${R.name}</div>
+        <div class="rc-stars" style="color:${R.color}">${'★'.repeat(R.stars)}</div>
+        <div class="rc-e">${card.e}</div>
+        <div class="rc-n">${card.name}</div>
+        <div class="rc-p">${card.pos}</div>
+      </div>
+      <button class="gacha-btn" id="toRoulette">つぎは お金ルーレット ▶</button>
+    </div>`;
+  const rect=document.querySelector('.reveal-card').getBoundingClientRect();
+  const colors=card.r==='LEGEND'?['#e0554a','#f5a623','#dd5049','#e07b2b']:card.r==='SS'?['#e0a012','#f5a623','#d4860a']:card.r==='SR'?['#8259e6','#7044d4','#a47ae6']:[R.color,'#7c8a9e'];
+  sparks(rect.left+rect.width/2,rect.top+rect.height/2,card.r==='LEGEND'?44:card.r==='SS'?32:card.r==='SR'?22:14,colors);
+  document.getElementById('toRoulette').addEventListener('click',startRoulette,{once:true});
+}
+function startRoulette(){
+  const {money}=gachaPending;
+  document.getElementById('gachaInner').innerHTML=`
+    <div class="gacha-step">
+      <div class="gacha-h">🎰 お金ルーレット</div>
+      <div class="gacha-sub">いくら当たるかな…？</div>
+      <div class="roulette"><div class="needle"></div><div class="roul-strip" id="roulStrip"></div></div>
+      <div id="roulResult"></div>
+    </div>`;
+  const strip=document.getElementById('roulStrip');
+  const ITEM=48,loops=6,seq=[];
+  for(let i=0;i<loops;i++)MONEY_FACES.forEach(v=>seq.push(v));
+  const targetIdx=seq.length;seq.push(money);MONEY_FACES.forEach(v=>seq.push(v));
+  strip.innerHTML=seq.map(v=>`<div class="roul-item ${v>=100?'big':''}">${v}円</div>`).join('');
+  const center=120/2-ITEM/2;const finalY=-(targetIdx*ITEM)+center;
+  strip.style.transform=`translateY(${center}px)`;
+  const tickInt=setInterval(()=>{beep(900,.03,'square',.04);},90);
+  requestAnimationFrame(()=>{strip.style.transition='transform 3.1s cubic-bezier(.12,.7,.18,1)';strip.style.transform=`translateY(${finalY}px)`;});
+  setTimeout(()=>{clearInterval(tickInt);finishGacha();},3250);
+}
+function finishGacha(){
+  const {card,money}=gachaPending;
+  state.money+=money;state.cards[card.id]=(state.cards[card.id]||0)+1;
+  state.gachaLog[state.today]={cardId:card.id,cardName:card.name,rarity:card.r,money,ts:Date.now()};
+  save();
+  beep(523,.15,'square');setTimeout(()=>beep(784,.15,'square'),130);setTimeout(()=>beep(1047,.25,'square'),260);
+  const big=money>=100;
+  document.getElementById('roulResult').innerHTML=`
+    <div class="gacha-result">${money}円！${big?' 🎉':''}</div>
+    <div class="gacha-total">今日の貯金 → <b>${state.money}円</b></div>
+    <button class="gacha-btn" id="gachaClose">やったー！とじる</button>`;
+  sparks(window.innerWidth/2,window.innerHeight/2,big?40:20,big?['#e0a012','#f5a623','#2ea556','#dd5049']:['#f5a623','#2ea556','#dd5049']);
+  if(navigator.vibrate)navigator.vibrate(big?[60,40,120,40,120]:[60,40,100]);
+  document.getElementById('gachaClose').addEventListener('click',()=>{
+    document.getElementById('gacha').classList.remove('show');document.getElementById('gachaInner').innerHTML='';renderTop();
+  },{once:true});
+}
+
+// ===== 小4 計算プール =====
+function ri(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+const CALC_TIERS={
+  1:{name:'小4 きほん',gens:[
+    ()=>{const a=ri(23,89),b=ri(13,89);return{t:'たし算',q:`${a} + ${b}`,ans:a+b};},
+    ()=>{const a=ri(35,99),b=ri(16,a-6);return{t:'ひき算',q:`${a} - ${b}`,ans:a-b};},
+    ()=>{const a=ri(3,9),b=ri(3,9);return{t:'九九',q:`${a} × ${b}`,ans:a*b};},
+    ()=>{const b=ri(2,9),ans=ri(2,9);return{t:'わり算',q:`${b*ans} ÷ ${b}`,ans:ans};},
+    ()=>{const a=ri(20,70),b=ri(15,40);return{t:'□をもとめる',q:`□ + ${b} = ${a+b}`,ans:a};},
+  ]},
+  2:{name:'小4 ひょうじゅん',gens:[
+    ()=>{const a=ri(125,899),b=ri(115,899);return{t:'たし算（筆算）',q:`${a} + ${b}`,ans:a+b};},
+    ()=>{const a=ri(250,999),b=ri(115,a-40);return{t:'ひき算（筆算）',q:`${a} - ${b}`,ans:a-b};},
+    ()=>{const a=ri(13,49),b=ri(3,9);return{t:'かけ算',q:`${a} × ${b}`,ans:a*b};},
+    ()=>{const b=ri(3,9),ans=ri(3,12),r=ri(1,b-1);return{t:'わり算（あまり）',q:`${b*ans+r} ÷ ${b} の商は？`,ans:ans,divmod:true};},
+    ()=>{const x=ri(6,12),b=ri(4,9);return{t:'□をもとめる',q:`${x} × □ = ${x*b}`,ans:b};},
+  ]},
+  3:{name:'小4 はってん',gens:[
+    ()=>{const a=ri(102,499),b=ri(3,9);return{t:'かけ算（大きい数）',q:`${a} × ${b}`,ans:a*b};},
+    ()=>{const a=ri(12,30),b=ri(12,30);return{t:'2けた×2けた',q:`${a} × ${b}`,ans:a*b};},
+    ()=>{const ans=ri(12,30),b=ri(3,9);return{t:'わり算',q:`${ans*b} ÷ ${b}`,ans:ans};},
+    ()=>{const base=ri(1,9)*20,p=[10,20,25,50][ri(0,3)];return{t:'割合（%）',q:`${base}の${p}%`,ans:base*p/100};},
+    ()=>{const sp=ri(3,9)*10,t=ri(2,6);return{t:'速さ',q:`時速${sp}kmで${t}時間すすむと何km？`,ans:sp*t};},
+  ]},
+};
+function tierName(t){return CALC_TIERS[t].name;}
+function calcHint(p){
+  const t=p.t;
+  if(t.indexOf('たし')>=0)return 'ヒント：くらいをそろえて、一のくらいから順に足そう。くり上がりに気をつけて！';
+  if(t.indexOf('ひき')>=0)return 'ヒント：一のくらいから引こう。引けないときは、上のくらいから1かりてくるよ！';
+  if(t.indexOf('九九')>=0||t.indexOf('かけ')>=0||t.indexOf('×')>=0)return 'ヒント：九九を思い出そう。大きい数は、くらいごとに分けてかけて、あとで合わせよう！';
+  if(t.indexOf('わり')>=0)return 'ヒント：「何回かけたら、この数になる?」と考えよう。あまりは、わったあとに残る数だよ。';
+  if(t.indexOf('□')>=0)return 'ヒント：反対の計算を使おう。たし算の□はひき算で、かけ算の□はわり算で見つかるよ！';
+  if(t.indexOf('割合')>=0)return 'ヒント：10%はもとの数の10分の1。25%は4分の1。まず10%を求めてから考えるとかんたん！';
+  if(t.indexOf('速さ')>=0)return 'ヒント：1時間で進む数を、時間の数だけかければOK！（道のり＝速さ×時間）';
+  return 'ヒント：あわてず、ていねいに計算してみよう！';
+}
+let calcSession=null;
+function startCalc(){
+  const tier=state.calcTier||1;const gens=CALC_TIERS[tier].gens;
+  const order=shuffle([0,1,2,3,4]);const problems=[];
+  for(let i=0;i<5;i++)problems.push(gens[order[i]]());
+  calcSession={tier,problems,idx:0,results:[]};renderCalc();
+}
+function renderCalc(){
+  const s=calcSession,p=s.problems[s.idx];
+  const pips=s.problems.map((_,i)=>{let c='';if(i<s.idx)c=s.results[i]?'ok':'ng';return `<div class="pip ${c}"></div>`;}).join('');
+  document.getElementById('screenInner').innerHTML=`
+   <div class="screen show" style="position:static;display:flex;">
+    <div class="scr-head">
+      <div class="x" onclick="closeScreen()">✕</div>
+      <div><div class="ht">🔢 計算チャレンジ</div><div class="hs">${s.idx+1}問目 / 5問</div></div>
+      <div style="margin-left:auto"><span class="lvl-pill">${tierName(s.tier)}</span></div>
+    </div>
+    <div class="scr-body">
+      <div class="calc-card">
+        <div class="calc-type">${p.t}</div>
+        <div class="calc-q">${p.q}</div>
+        <input class="calc-input" id="calcIn" inputmode="numeric" pattern="[0-9]*" placeholder="？" autocomplete="off">
+        ${p.divmod?`<div style="font-size:12px;color:#7c8a9e;margin-top:8px;font-weight:700">わりきれず「あまり」が出るよ。商（=何回われるか）を入れてね</div>`:''}
+        <div class="calc-progress">${pips}</div>
+        <div class="feedback" id="calcFb"></div>
+        <div class="hintbox" id="calcHint"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="hintBtn" style="margin-top:14px;">🤔 ヒントをみる</button>
+    </div>
+    <div class="scr-foot"><button class="btn btn-gold" id="calcSubmit">こたえる</button></div>
+   </div>`;
+  const input=document.getElementById('calcIn');setTimeout(()=>input.focus(),100);
+  input.addEventListener('keydown',e=>{if(e.key==='Enter')submitCalc();});
+  document.getElementById('calcSubmit').addEventListener('click',submitCalc);
+  document.getElementById('hintBtn').addEventListener('click',()=>{
+    const box=document.getElementById('calcHint');box.classList.add('show');box.innerHTML=calcHint(p);
+    document.getElementById('hintBtn').disabled=true;
+  });
+}
+function submitCalc(){
+  const s=calcSession,p=s.problems[s.idx];
+  const input=document.getElementById('calcIn');const val=parseInt(input.value,10);
+  if(isNaN(val)){input.focus();return;}
+  const correct=val===p.ans;s.results[s.idx]=correct;
+  const fb=document.getElementById('calcFb');
+  if(correct){fb.textContent='⭕ せいかい！ナイスバッティング！';fb.className='feedback good';
+    beep(680,.12,'triangle');setTimeout(()=>beep(900,.12,'triangle'),90);
+    const r=input.getBoundingClientRect();sparks(r.left+r.width/2,r.top,8,['#2ea556','#f5a623','#dd5049']);}
+  else{fb.textContent=`おしい！ こたえは ${p.ans} だよ`;fb.className='feedback bad';beep(200,.2,'sawtooth',.1);}
+  document.getElementById('calcSubmit').disabled=true;
+  setTimeout(()=>{s.idx++;if(s.idx>=5)finishCalc();else renderCalc();},correct?900:1900);
+}
+function finishCalc(){
+  const s=calcSession;const correct=s.results.filter(Boolean).length;
+  state.calcStats.correct+=correct;state.calcStats.wrong+=(5-correct);
+  let levelMsg='',newTier=state.calcTier;
+  if(correct>=4&&state.calcTier<3){newTier=state.calcTier+1;levelMsg=`🎉 レベルアップ！ つぎは「${tierName(newTier)}」だよ`;}
+  else if(correct<=1&&state.calcTier>1){newTier=state.calcTier-1;levelMsg=`むりせず「${tierName(newTier)}」にもどして、とくいになろう！`;}
+  else levelMsg='この調子！ つづければどんどん強くなるよ💪';
+  state.calcTier=newTier;save();
+  document.getElementById('screenInner').innerHTML=`
+   <div class="screen show" style="position:static;display:flex;">
+    <div class="scr-head"><div class="x" onclick="closeScreen()">✕</div><div><div class="ht">🔢 計算チャレンジ</div><div class="hs">けっか</div></div></div>
+    <div class="scr-body">
+      <div class="calc-card">
+        <div style="font-size:54px">${correct>=4?'🏆':correct>=2?'👏':'💪'}</div>
+        <div class="calc-q" style="font-size:30px;margin-top:6px">${correct} / 5 せいかい</div>
+        <div style="margin-top:16px;font-size:14px;color:#7d5e15;font-weight:700;line-height:1.6">${levelMsg}</div>
+      </div>
+    </div>
+    <div class="scr-foot"><button class="btn btn-green" onclick="finishActivity('calc')">クエストクリア！ ⚾</button></div>
+   </div>`;
+  beep(523,.15,'square');setTimeout(()=>beep(784,.2,'square'),140);
+}
+
+// ===== 音読 =====
+function renderReading(item){
+  const th=themeOf(item.theme);
+  const story=rubyize((item.s||'').replace(/\n/g,'<br>'));
+  document.getElementById('screenInner').innerHTML=`
+   <div class="screen show" style="position:static;display:flex;">
+    <div class="scr-head"><div class="x" onclick="closeScreen()">✕</div>
+      <div><div class="ht">📖 音読</div><div class="hs">こえに出して読もう</div></div></div>
+    <div class="scr-body">
+      <div class="theme-tag">${th.e} ${th.n}</div>
+      <div class="ai-card">
+        <div class="ai-label">📣 ${item.t}</div>
+        <div class="ai-story">${story}</div>
+      </div>
+      <div class="q-item" style="margin-top:16px">
+        <div class="qq">📝 ${item.q}（声でも文字でもOK・答えなくてもクリアできるよ）</div>
+        <textarea class="answer-area" id="readAns" placeholder="かんたんでいいよ（任意）"></textarea>
+        <button class="btn btn-ghost btn-sm" id="readCheck" style="margin-top:8px">答えをたしかめる</button>
+        <div id="readReply"></div>
+      </div>
+      <div class="sec-title" style="font-size:13px">📚 青空文庫の名作も読めるよ</div>
+      <div class="sec-sub">タップすると本文サイトがひらきます（無料・著作権切れの名作）</div>
+      <div class="aozora-list">
+        ${AOZORA.map(a=>`<a class="aozora-item" href="${a.url}" target="_blank" rel="noopener">
+          <span class="ae">${a.e}</span><span class="at"><span class="atn">${a.title}</span><span class="atm">${a.author}${a.mins?' ・ '+a.mins:''}</span></span><span class="arrow">↗</span></a>`).join('')}
+      </div>
+    </div>
+    <div class="scr-foot"><button class="btn btn-green" id="readDone">読みおわった！ ⚾</button></div>
+   </div>`;
+  document.getElementById('readCheck').addEventListener('click',()=>{
+    const ans=document.getElementById('readAns').value.trim();
+    document.getElementById('readReply').innerHTML=`<div class="sensei-reply"><div class="sr-head">🌸 こんなふうにまとめられたら花丸！</div><div class="sr-body">${rubyize(item.a)}\n\n${ans?'じぶんの言葉で書けたね、すごい！⚾ 上の例とくらべてみよう。':'声に出して読めたかな？上の例を見て、どんな話か言ってみよう！'}</div></div>`;
+    document.getElementById('readCheck').disabled=true;
+    addLog('音読',item.t+'：'+item.q,ans||'(声で答えた/未記入)','花丸例：'+item.a);
+  });
+  document.getElementById('readDone').addEventListener('click',()=>finishActivity('read'));
+}
+
+// ===== 作文 =====
+function renderWriting(item){
+  const th=themeOf(item.theme);
+  document.getElementById('screenInner').innerHTML=`
+   <div class="screen show" style="position:static;display:flex;">
+    <div class="scr-head"><div class="x" onclick="closeScreen()">✕</div>
+      <div><div class="ht">✍️ 作文</div><div class="hs">穴うめで意見文を完成</div></div></div>
+    <div class="scr-body">
+      <div class="theme-tag">${th.e} ${th.n}</div>
+      <div class="ai-card">
+        <div class="ai-label">📝 今日のお題</div>
+        <div style="font-size:16px;line-height:1.8;color:#1c2c44;font-weight:700">${rubyize(item.q)}</div>
+      </div>
+      <div class="sec-sub" style="margin-top:14px">下の □ をうめると、文が完成するよ。1つずつ入れてみよう！</div>
+      <div class="tmpl-box" id="tmplBox"></div>
+      <div id="blankInputs"></div>
+      <div class="preview" id="previewBox" style="display:none"><span class="pl">✨ できあがった作文</span><span id="previewText"></span></div>
+      <div id="writeReply"></div>
+    </div>
+    <div class="scr-foot" id="writeFoot"><button class="btn btn-gold" id="writeDone">できた！ 見てもらう ▶</button></div>
+   </div>`;
+  const bi=document.getElementById('blankInputs');
+  item.blanks.forEach(bl=>{
+    const d=document.createElement('div');d.className='blank-input';
+    d.innerHTML=`<label>${bl.l} のところ</label><div class="bhint">${rubyize(bl.h||'')}</div><input type="text" data-label="${bl.l}" autocomplete="off">`;
+    bi.appendChild(d);
+  });
+  const inputs=[...bi.querySelectorAll('input')];
+  const update=()=>{
+    const vals={};inputs.forEach(inp=>{vals[inp.dataset.label]=inp.value.trim();});
+    let filledCount=Object.values(vals).filter(Boolean).length;
+    let disp=item.tmpl;
+    item.blanks.forEach(bl=>{const v=vals[bl.l];const cls=v?'tmpl-blank filled':'tmpl-blank';
+      disp=disp.replace(`［${bl.l}］`,`<span class="${cls}">${v||'　'+bl.l+'　'}</span>`);});
+    document.getElementById('tmplBox').innerHTML=rubyize(disp);
+    let asm=item.tmpl;item.blanks.forEach(bl=>{asm=asm.replace(`［${bl.l}］`,vals[bl.l]||`（${bl.l}）`);});
+    const pv=document.getElementById('previewBox');
+    if(filledCount>0){pv.style.display='block';document.getElementById('previewText').innerHTML=rubyize(asm);}
+    else pv.style.display='none';
+  };
+  inputs.forEach(inp=>inp.addEventListener('input',update));update();
+  document.getElementById('writeDone').addEventListener('click',()=>{
+    const vals={};inputs.forEach(inp=>vals[inp.dataset.label]=inp.value.trim());
+    const filled=Object.values(vals).filter(Boolean).length;
+    if(filled<item.blanks.length){alert('ぜんぶの □ をうめてみよう！むずかしかったら、みじかい言葉でもOKだよ');return;}
+    let asm=item.tmpl;item.blanks.forEach(bl=>{asm=asm.replace(`［${bl.l}］`,vals[bl.l]);});
+    const exHtml=item.ex.map((e,i)=>`<div style="margin-top:8px;padding:10px;background:#fff;border:1px solid var(--line);border-radius:10px;font-size:13.5px;line-height:1.7;color:#1c2c44">れい${i+1}：${rubyize(e)}</div>`).join('');
+    const prompt=stripRuby(`小学4年生のぼくが書いた作文です。中学受験（千代田区立九段中等教育学校）をめざしています。よいところをたくさんほめて、もっとよくなるところを1つだけ、やさしく教えてください。\n\n【お題】${item.q}\n【ぼくの作文】${asm}`);
+    document.getElementById('writeReply').innerHTML=
+      `<div class="sensei-reply"><div class="sr-head">🎉 ${praise()}</div><div class="sr-body">書けたね！つぎは、Gemini先生に見せて、ほめてもらおう！</div></div>`
+      +geminiBox(prompt)
+      +`<div class="after-gemini">― Gemini先生に見せたあと、下のお手本ともくらべてみよう ―</div>`
+      +`<div class="sensei-reply" style="margin-top:8px"><div class="sr-body">作文には、いろんな書き方があるよ👇</div>${exHtml}</div>`;
+    document.getElementById('writeFoot').innerHTML='<button class="btn btn-green" onclick="finishActivity(\'write\')">クエストクリア！ ⚾</button>';
+    state.sakubunDone=(state.sakubunDone||0)+1;
+    addLog('作文',item.q,asm,'例：'+item.ex.join(' ／ '));
+  });
+}
+
+// ===== 理科社会のタネ =====
+let sciSelected=null;
+function renderScience(item){
+  const th=themeOf(item.theme);sciSelected=null;
+  document.getElementById('screenInner').innerHTML=`
+   <div class="screen show" style="position:static;display:flex;">
+    <div class="scr-head"><div class="x" onclick="closeScreen()">✕</div>
+      <div><div class="ht">🔬 理科社会のタネ</div><div class="hs">今日のなぜ？</div></div></div>
+    <div class="scr-body">
+      <div class="theme-tag">${th.e} ${th.n}</div>
+      <div class="ai-card">
+        <div class="ai-label">❓ 今日のなぜ？</div>
+        <div style="font-size:17px;line-height:1.8;color:#1c2c44;font-weight:700">${rubyize(item.q)}</div>
+        <div style="margin-top:12px;font-size:13px;color:#3a5bb8;font-weight:700;background:#eef4ff;border:1px solid #cdd9f0;padding:11px;border-radius:10px">💡 考えるヒント：${rubyize(item.think)}</div>
+      </div>
+      <div class="sec-sub" style="margin-top:16px">まず、どれだと思う？ ひとつえらんでタップしてみよう（当たってなくても大丈夫！）</div>
+      <div id="sciChoices"></div>
+      <div id="sciReason" style="display:none">
+        <div class="sec-sub" style="margin-top:18px">えらべたね！ では <b style="color:#1c2c44">なぜ、それをえらんだ？</b> 思ったことを書いてみよう。</div>
+        <textarea class="answer-area" id="sciArea" style="min-height:90px" placeholder="ぼくが○○をえらんだのは、…だからです"></textarea>
+      </div>
+      <div id="sciReply"></div>
+    </div>
+    <div class="scr-foot" id="sciFoot"></div>
+   </div>`;
+  const cbox=document.getElementById('sciChoices');
+  item.choices.forEach((c,idx)=>{
+    const b=document.createElement('button');b.className='choice-btn';b.dataset.idx=idx;
+    b.innerHTML=`<div class="choice-row"><span class="choice-mark">${'ABC'[idx]}</span><span class="choice-text">${rubyize(c.t)}</span></div>`;
+    b.addEventListener('click',()=>selectChoice(item,idx));
+    cbox.appendChild(b);
+  });
+}
+function selectChoice(item,idx){
+  if(document.querySelector('#sciChoices .choice-btn.correct'))return; // already revealed
+  sciSelected=idx;
+  document.querySelectorAll('#sciChoices .choice-btn').forEach((b,i)=>b.classList.toggle('selected',i===idx));
+  document.getElementById('sciReason').style.display='block';
+  document.getElementById('sciFoot').innerHTML='<button class="btn btn-gold" id="sciDone">できた！ 見てもらう ▶</button>';
+  document.getElementById('sciDone').addEventListener('click',()=>revealScience(item));
+  setTimeout(()=>document.getElementById('sciArea').focus(),60);
+}
+function revealScience(item){
+  const text=document.getElementById('sciArea').value.trim();
+  if(text.length<3){alert('みじかくていいよ。なぜそれをえらんだか、書いてみよう！');return;}
+  document.querySelectorAll('#sciChoices .choice-btn').forEach((b,i)=>{
+    const c=item.choices[i];b.classList.remove('selected');
+    b.classList.add(c.ok?'correct':'wrong');
+    if(i===sciSelected)b.classList.add('chosen-outline');
+    if(!b.querySelector('.choice-comment')){const cm=document.createElement('div');cm.className='choice-comment';cm.innerHTML=(c.ok?'✓ ':'· ')+rubyize(c.c);b.appendChild(cm);}
+    b.disabled=true;
+  });
+  const chosen=item.choices[sciSelected];
+  const head=chosen.ok?`🎉 ${praise()} 考え方もバッチリ！`:`🎉 ${praise()} 自分で考えてえらべたのがえらい！`;
+  const viewsHtml=item.views.map(v=>`<div style="margin-top:6px;padding:9px 11px;background:#fff;border:1px solid var(--line);border-radius:10px;font-size:13px;line-height:1.6;color:#1c2c44">🔎 ${rubyize(v)}</div>`).join('');
+  const prompt=stripRuby(`小学4年生のぼくが、理科や社会の「なぜ？」に、三択からえらんで、その理由を考えました。中学受験（千代田区立九段中等教育学校）をめざしています。考えたことをいっぱいほめて、本当の答えもやさしく教えてください。\n\n【質問】${item.q}\n【ぼくがえらんだ答え】${chosen.t}\n【えらんだ理由】${text}`);
+  document.getElementById('sciReply').innerHTML=
+    `<div class="sensei-reply"><div class="sr-head">${head}</div><div class="sr-body">つぎは、Gemini先生に見せて、ほめてもらおう！</div></div>`
+    +geminiBox(prompt)
+    +`<div class="after-gemini">― Gemini先生に見せたあと、下の答えともくらべてみよう ―</div>`
+    +`<div class="sensei-reply" style="margin-top:8px"><div class="sr-body"><b>本当のところは…</b>\n${rubyize(item.a)}</div><div style="margin-top:10px;font-size:12px;font-weight:800;color:#1e7a44">いろんな見方があるよ👇</div>${viewsHtml}</div>`;
+  document.getElementById('sciFoot').innerHTML='<button class="btn btn-green" onclick="finishActivity(\'sci\')">クエストクリア！ ⚾</button>';
+  addLog('理科社会',item.q,'えらんだ：'+chosen.t+' ／ 理由：'+text,'答え：'+item.a);
+}
+
+// ===== Activity router =====
+function openActivity(id){
+  document.getElementById('screen').classList.add('show');
+  if(id==='calc'){startCalc();return;}
+  if(id==='read'){renderReading(pickFromPool('read'));}
+  else if(id==='write'){renderWriting(pickFromPool('write'));}
+  else if(id==='sci'){renderScience(pickFromPool('sci'));}
+}
+function finishActivity(id){closeScreen();completeQuest(id);}
+function closeScreen(){document.getElementById('screen').classList.remove('show');document.getElementById('screenInner').innerHTML='';}
+
+// ===== 図鑑 =====
+function renderZukan(){
+  const got=Object.keys(state.cards).filter(id=>state.cards[id]>0).length;
+  document.getElementById('collGot').textContent=got;
+  document.getElementById('collTotal').textContent=CARDS.length;
+  document.getElementById('collBar').style.width=(got/CARDS.length*100)+'%';
+  const body=document.getElementById('collBody');body.innerHTML='';
+  RARITY_ORDER.forEach(rk=>{
+    const R=RARITY[rk];const cards=CARDS.filter(c=>c.r===rk);
+    const grp=document.createElement('div');grp.className='rar-group';
+    grp.innerHTML=`<div class="rar-label" style="color:${R.color}">${'★'.repeat(R.stars)} ${R.name}</div>`;
+    const grid=document.createElement('div');grid.className='card-grid';
+    cards.forEach(c=>{
+      const cnt=state.cards[c.id]||0;const owned=cnt>0;
+      const el=document.createElement('div');el.className='pcard'+(owned?'':' locked');
+      if(owned){el.style.borderColor=R.color;el.style.boxShadow=`0 0 12px ${R.glow}`;
+        el.innerHTML=`${cnt>1?`<span class="pcount">×${cnt}</span>`:''}<div class="pe">${c.e}</div><div class="pn">${c.name}</div><div class="pp">${c.pos}</div><div class="pstars" style="color:${R.color}">${'★'.repeat(R.stars)}</div>`;
+      }else{el.innerHTML=`<div class="plock">？</div><div class="pn" style="color:#a8b2bf">？？？</div>`;}
+      grid.appendChild(el);
+    });
+    grp.appendChild(grid);body.appendChild(grp);
+  });
+}
+
+// ===== きろく =====
+function renderRecord(){
+  const keys=Object.keys(state.history);const live=Object.values(state.checks).filter(Boolean).length;
+  const full=keys.filter(k=>state.history[k].count===5&&k!==state.today).length+(live===5?1:0);
+  document.getElementById('stTotal').textContent=full;
+  document.getElementById('stBest').textContent=bestStreak();
+  document.getElementById('stYen').textContent=state.money;
+  document.getElementById('stCalc').textContent=tierName(state.calcTier);
+  const now=new Date(),y=now.getFullYear(),m=now.getMonth();
+  const first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate();
+  const grid=document.getElementById('calGrid');grid.innerHTML='';
+  for(let i=0;i<first;i++)grid.appendChild(document.createElement('div'));
+  for(let dd=1;dd<=days;dd++){
+    const k=`${y}-${String(m+1).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+    const e=document.createElement('div');e.className='cd';e.textContent=dd;
+    let c=0;if(k===state.today)c=live;else if(state.history[k])c=state.history[k].count;
+    if(c===5)e.classList.add('win');else if(c>0)e.classList.add('part');
+    if(k===state.today)e.classList.add('today');
+    grid.appendChild(e);
+  }
+}
+function renderParent(){
+  const box=document.getElementById('logList');box.innerHTML='';
+  if(state.log.length===0){box.innerHTML='<div class="sec-sub" style="margin-top:20px;text-align:center">まだ記録はありません。音読・作文・理科社会をやると、ここに答えと手本が残ります。</div>';return;}
+  state.log.forEach(l=>{
+    const d=new Date(l.ts);const tstr=`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    const el=document.createElement('div');el.className='log-item';
+    el.innerHTML=`<div class="log-meta"><span class="log-tag">${l.tag}</span><span>${tstr}</span></div>
+      <div class="log-q">📌 ${l.question}</div>
+      <div class="log-a"><b style="color:#1e7a44">本人:</b> ${l.answer||'(なし)'}</div>
+      <div class="log-a" style="border-color:rgba(46,165,86,.4)"><b style="color:#2c7a4c">手本:</b> ${l.reply||''}</div>`;
+    box.appendChild(el);
+  });
+}
+
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('show'));
+    t.classList.add('active');
+    document.getElementById('panel-'+t.dataset.tab).classList.add('show');
+    if(t.dataset.tab==='zukan')renderZukan();
+    if(t.dataset.tab==='record')renderRecord();
+    if(t.dataset.tab==='parent')renderParent();
+  });
+});
+
+let actx=null;
+function beep(freq,dur,type='sine',vol=.15){
+  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    const o=actx.createOscillator(),g=actx.createGain();o.type=type;o.frequency.value=freq;
+    o.connect(g);g.connect(actx.destination);g.gain.setValueAtTime(vol,actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+dur);o.start();o.stop(actx.currentTime+dur);}catch(e){}
+}
+function sparks(x,y,n,colors){
+  const b=document.getElementById('burst');
+  for(let i=0;i<n;i++){
+    const s=document.createElement('div');s.className='spark';s.style.background=colors[i%colors.length];
+    s.style.left=x+'px';s.style.top=y+'px';b.appendChild(s);
+    const ang=Math.random()*Math.PI*2,vel=70+Math.random()*150;
+    const dx=Math.cos(ang)*vel,dy=Math.sin(ang)*vel-50;
+    s.animate([{transform:'translate(0,0) rotate(0deg)',opacity:1},{transform:`translate(${dx}px,${dy+200}px) rotate(${Math.random()*620}deg)`,opacity:0}],
+      {duration:1000+Math.random()*600,easing:'cubic-bezier(.2,.6,.3,1)'}).onfinish=()=>s.remove();
+  }
+}
+
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  if(confirm('今日のチェックを全部消します。（ガチャ結果・貯金はそのまま残ります）よろしいですか？')){
+    state.checks={};wasComplete=false;renderQuests();renderTop();save();}
+});
+document.getElementById('resetAllBtn').addEventListener('click',()=>{
+  if(confirm('すべての記録（連勝・カレンダー・先生メモ・計算レベル・貯金・集めたカード）を消します。元にもどせません。よろしいですか？')){
+    state={today:todayKey(),checks:{},history:{},calcTier:1,calcStats:{correct:0,wrong:0},sakubunDone:0,log:[],money:0,cards:{},gachaLog:{},seen:{read:[],write:[],sci:[]}};
+    store.del('kudan-state-v5');renderQuests();renderTop();alert('初期化しました');
+  }
+});
+
+// ===== INIT =====
+buildPools();
+load();
+renderQuests();
+renderTop();
+wasComplete=Object.values(state.checks).filter(Boolean).length===5;
+
+</script>
+</body>
+</html>
