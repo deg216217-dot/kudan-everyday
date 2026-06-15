@@ -97,7 +97,7 @@
   .pcard .plock{font-size:24px;color:#c2ccd8;}
   .pcard .pstars{font-size:8px;margin-top:3px;letter-spacing:-1px;}
 
-  .screen{position:fixed;inset:0;z-index:50;background:radial-gradient(135% 90% at 50% -8%,#fdf8ec 0%,var(--bg) 55%,var(--bg2) 100%);display:none;flex-direction:column;}
+  .screen{position:fixed;top:0;left:0;right:0;bottom:0;z-index:50;background:radial-gradient(135% 90% at 50% -8%,#fdf8ec 0%,var(--bg) 55%,var(--bg2) 100%);display:none;flex-direction:column;}
   .screen.show{display:flex;animation:slideup .3s;}
   .scr-head{display:flex;align-items:center;gap:12px;padding:16px 16px 12px;border-bottom:1.5px solid var(--line);background:rgba(255,253,247,.9);}
   .scr-head .x{width:38px;height:38px;border-radius:11px;background:#f3ecdb;border:1px solid var(--line);display:grid;place-items:center;font-size:20px;cursor:pointer;flex-shrink:0;color:var(--ink2);}
@@ -254,10 +254,11 @@
 
   .reset{margin:22px auto 0;display:block;background:none;border:1px solid var(--line);color:var(--muted);font-size:11px;font-weight:700;padding:8px 16px;border-radius:99px;cursor:pointer;}
 
-  .burst{position:fixed;inset:0;pointer-events:none;z-index:90;}
-  .spark{position:absolute;width:11px;height:11px;border-radius:2px;will-change:transform,opacity;}
+  .burst{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:90;}
+  .spark{position:absolute;width:11px;height:11px;border-radius:2px;will-change:transform,opacity;animation:sparkfly 1.2s cubic-bezier(.2,.6,.3,1) forwards;}
+  @keyframes sparkfly{from{transform:translate(0,0) rotate(0deg);opacity:1}to{transform:translate(var(--dx,0),var(--dy,0)) rotate(var(--rot,0deg));opacity:0}}
 
-  .gacha{position:fixed;inset:0;z-index:80;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:radial-gradient(120% 80% at 50% 25%,#fff6e0 0%,#f6ecd8 65%,#efe3cd 100%);text-align:center;overflow:hidden;}
+  .gacha{position:fixed;top:0;left:0;right:0;bottom:0;z-index:80;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:radial-gradient(120% 80% at 50% 25%,#fff6e0 0%,#f6ecd8 65%,#efe3cd 100%);text-align:center;overflow:hidden;}
   .gacha.show{display:flex;animation:fade .3s;}
   .gacha-step{width:100%;max-width:340px;display:flex;flex-direction:column;align-items:center;}
   .gacha-h{font-family:'Mochiy Pop One',sans-serif;font-size:20px;color:var(--gold-deep);margin-bottom:6px;}
@@ -271,7 +272,7 @@
   @keyframes packspin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
 
   .reveal-card{width:200px;height:280px;border-radius:18px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;border:3px solid var(--gold-btn2);background:#fff;box-shadow:0 0 50px var(--cardglow,rgba(245,166,35,.5)),0 10px 30px rgba(28,44,68,.18);animation:cardpop .6s cubic-bezier(.2,1.4,.4,1);overflow:hidden;}
-  .reveal-card::before{content:'';position:absolute;inset:0;background:linear-gradient(145deg,var(--cardbg1,#fff4dc),var(--cardbg2,#ffe8c0));opacity:.55;z-index:0;}
+  .reveal-card::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(145deg,var(--cardbg1,#fff4dc),var(--cardbg2,#ffe8c0));opacity:.55;z-index:0;}
   .reveal-card>*{position:relative;z-index:1;}
   .reveal-card .rc-rar{font-size:13px;font-weight:800;letter-spacing:1px;color:var(--cardcolor,#333);}
   .reveal-card .rc-stars{font-size:18px;margin:4px 0 12px;letter-spacing:-1px;}
@@ -307,3 +308,14 @@
 .say-h{font-weight:800;color:var(--gold-deep);font-size:13px;margin-bottom:8px;}
 .say-body{font-size:16px;line-height:1.95;color:var(--ink);font-weight:700;}
 .say-note{margin-top:10px;font-size:12px;color:#8a6d2a;line-height:1.6;font-weight:600;}
+
+/* ガチャ：カプセル（古いiOSでも動くCSSアニメ） */
+.capsule{width:148px;height:148px;margin:8px auto 2px;position:relative;cursor:pointer;border-radius:50%;background:linear-gradient(180deg,#ffd34d 0%,#ffd34d 50%,#ffffff 50%,#ffffff 100%);border:3px solid #e6a91e;box-shadow:0 8px 22px rgba(28,44,68,.18);animation:capbob 1.6s ease-in-out infinite;}
+.capsule .cap-band{position:absolute;left:-3px;right:-3px;top:50%;height:12px;margin-top:-6px;background:rgba(28,44,68,.18);}
+.capsule .cap-q{position:absolute;left:0;top:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;font-size:46px;color:#bb750a;font-weight:800;}
+.capsule:active{transform:scale(.96);}
+.capsule.shake{animation:capshake .6s;}
+.cap-tap{text-align:center;font-size:13px;font-weight:800;color:var(--gold-deep);margin-top:16px;}
+.cap-open{font-size:60px;margin:4px 0;animation:pop .5s;}
+@keyframes capbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes capshake{0%,100%{transform:translate(0,0) rotate(0deg)}15%{transform:translate(-7px,0) rotate(-7deg)}30%{transform:translate(7px,0) rotate(7deg)}45%{transform:translate(-6px,0) rotate(-6deg)}60%{transform:translate(6px,0) rotate(6deg)}80%{transform:translate(-3px,0) rotate(-3deg)}}

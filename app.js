@@ -304,51 +304,41 @@ let gachaPending=null;
 function openGacha(){
   if(state.gachaLog[state.today])return; // 1日1回まで
   gachaPending={points:rollPoints()};
-  document.getElementById('gacha').classList.add('show');renderGachaPack();
+  document.getElementById('gacha').classList.add('show');renderCapsule();
 }
-function renderGachaPack(){
+function renderCapsule(){
   document.getElementById('gachaInner').innerHTML=`
     <div class="gacha-step">
       <div class="gacha-h">⚾ 試合に勝った！</div>
-      <div class="gacha-sub">パックをタップして、ポイントをゲット！</div>
-      <div class="pack" id="packEl"><div class="pball">⚾</div><div class="ptap">タップ！</div></div>
+      <div class="gacha-sub">カプセルをタップして開けよう！</div>
+      <div class="capsule" id="capEl"><div class="cap-band"></div><div class="cap-q">？</div></div>
+      <div class="cap-tap">タップ！</div>
     </div>`;
-  document.getElementById('packEl').addEventListener('click',startRoulette,{once:true});
+  document.getElementById('capEl').addEventListener('click',openCapsule,{once:true});
 }
-function startRoulette(){
-  const {points}=gachaPending;
-  beep(440,.1,'triangle');setTimeout(()=>beep(660,.1,'triangle'),80);
-  document.getElementById('gachaInner').innerHTML=`
-    <div class="gacha-step">
-      <div class="gacha-h">🎰 ポイントルーレット</div>
-      <div class="gacha-sub">何ポイント当たるかな…？</div>
-      <div class="roulette"><div class="needle"></div><div class="roul-strip" id="roulStrip"></div></div>
-      <div id="roulResult"></div>
-    </div>`;
-  const strip=document.getElementById('roulStrip');
-  const ITEM=48,loops=6,seq=[];
-  for(let i=0;i<loops;i++)POINT_FACES.forEach(v=>seq.push(v));
-  const targetIdx=seq.length;seq.push(points);POINT_FACES.forEach(v=>seq.push(v));
-  strip.innerHTML=seq.map(v=>`<div class="roul-item ${v>=70?'big':''}">${v}pt</div>`).join('');
-  const center=120/2-ITEM/2;const finalY=-(targetIdx*ITEM)+center;
-  strip.style.transform=`translateY(${center}px)`;
-  const tickInt=setInterval(()=>{beep(900,.03,'square',.04);},90);
-  requestAnimationFrame(()=>{strip.style.transition='transform 3.1s cubic-bezier(.12,.7,.18,1)';strip.style.transform=`translateY(${finalY}px)`;});
-  setTimeout(()=>{clearInterval(tickInt);finishGacha();},3250);
+function openCapsule(){
+  const cap=document.getElementById('capEl');
+  if(cap)cap.className='capsule shake';
+  beep(440,.1,'triangle');setTimeout(()=>beep(660,.1,'triangle'),120);setTimeout(()=>beep(880,.12,'triangle'),240);
+  setTimeout(revealGacha,650);
 }
-function finishGacha(){
-  const {points}=gachaPending;
+function revealGacha(){
+  const points=gachaPending.points;
   state.points+=points;
   state.gachaLog[state.today]={points,ts:Date.now()};
   save();
   beep(523,.15,'square');setTimeout(()=>beep(784,.15,'square'),130);setTimeout(()=>beep(1047,.25,'square'),260);
-  const big=points>=70;const canEx=state.points>=1000;
-  document.getElementById('roulResult').innerHTML=`
-    <div class="gacha-result">${points} ポイント！${big?' 🎉':''}</div>
-    <div class="gacha-total">いまのポイント → <b>${state.points} pt</b></div>
-    ${canEx?'<div class="gacha-sub" style="margin-top:12px;color:#1e7a44">🎁 1000pt貯まった！「ポイント」タブで1,000円と交換できるよ</div>':''}
-    <button class="gacha-btn" id="gachaClose">やったー！とじる</button>`;
-  sparks(window.innerWidth/2,window.innerHeight/2,big?40:20,big?['#e0a012','#f5a623','#2ea556','#dd5049']:['#f5a623','#2ea556','#dd5049']);
+  const big=points>=70,canEx=state.points>=1000;
+  document.getElementById('gachaInner').innerHTML=`
+    <div class="gacha-step">
+      <div class="gacha-h">🎉 カプセル、ぱかっ！</div>
+      <div class="cap-open">🪙</div>
+      <div class="gacha-result">${points} ポイント！${big?' 🎉':''}</div>
+      <div class="gacha-total">いまのポイント → <b>${state.points} pt</b></div>
+      ${canEx?'<div class="gacha-sub" style="margin-top:12px;color:#1e7a44">🎁 1000pt貯まった！「ポイント」タブで1,000円と交換できるよ</div>':''}
+      <button class="gacha-btn" id="gachaClose">やったー！とじる</button>
+    </div>`;
+  sparks(window.innerWidth/2,window.innerHeight/2,big?34:18,big?['#e0a012','#f5a623','#2ea556','#dd5049']:['#f5a623','#2ea556','#dd5049']);
   if(navigator.vibrate)navigator.vibrate(big?[60,40,120,40,120]:[60,40,100]);
   document.getElementById('gachaClose').addEventListener('click',()=>{
     document.getElementById('gacha').classList.remove('show');document.getElementById('gachaInner').innerHTML='';renderTop();
@@ -976,14 +966,18 @@ function beep(freq,dur,type='sine',vol=.15){
     g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+dur);o.start();o.stop(actx.currentTime+dur);}catch(e){}
 }
 function sparks(x,y,n,colors){
-  const b=document.getElementById('burst');
+  const b=document.getElementById('burst');if(!b)return;
   for(let i=0;i<n;i++){
     const s=document.createElement('div');s.className='spark';s.style.background=colors[i%colors.length];
-    s.style.left=x+'px';s.style.top=y+'px';b.appendChild(s);
+    s.style.left=x+'px';s.style.top=y+'px';
     const ang=Math.random()*Math.PI*2,vel=70+Math.random()*150;
     const dx=Math.cos(ang)*vel,dy=Math.sin(ang)*vel-50;
-    s.animate([{transform:'translate(0,0) rotate(0deg)',opacity:1},{transform:`translate(${dx}px,${dy+200}px) rotate(${Math.random()*620}deg)`,opacity:0}],
-      {duration:1000+Math.random()*600,easing:'cubic-bezier(.2,.6,.3,1)'}).onfinish=()=>s.remove();
+    s.style.setProperty('--dx',dx.toFixed(0)+'px');
+    s.style.setProperty('--dy',(dy+200).toFixed(0)+'px');
+    s.style.setProperty('--rot',(Math.random()*620).toFixed(0)+'deg');
+    s.style.animationDuration=(1+Math.random()*0.6).toFixed(2)+'s';
+    b.appendChild(s);
+    setTimeout(()=>{if(s.parentNode)s.parentNode.removeChild(s);},1800);
   }
 }
 
