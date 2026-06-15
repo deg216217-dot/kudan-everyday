@@ -551,7 +551,7 @@ function renderReading(item){
           <span class="ae">${a.e}</span><span class="at"><span class="atn">${a.title}</span><span class="atm">${a.author}${a.mins?' ・ '+a.mins:''}</span></span><span class="arrow">↗</span></a>`).join('')}
       </div>
     </div>
-    <div class="scr-foot" style="display:flex;gap:9px"><button class="btn btn-ghost" id="readMore" style="flex:0 0 auto;min-width:112px">📖 もう1話</button><button class="btn btn-green" id="readDone" style="flex:1" disabled>こたえてからクリア ⚾</button></div>
+    <div class="scr-foot" style="display:flex;gap:9px;align-items:center"><button class="btn btn-ghost" id="readMore" style="flex:1;width:auto;min-width:0">📖 もう1話</button><button class="btn btn-green" id="readDone" style="flex:1.5;width:auto;min-width:0" disabled>こたえてからクリア ⚾</button></div>
    </div>`;
   const doneBtn=document.getElementById('readDone');
   document.getElementById('readHint').addEventListener('click',()=>{
