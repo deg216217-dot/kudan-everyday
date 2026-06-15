@@ -302,3 +302,8 @@
   @keyframes spin{to{transform:rotate(360deg)}}
   @keyframes blink{0%,100%{opacity:.35}50%{opacity:1}}
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+
+.say-card{margin-top:12px;background:#fff8e8;border:1.5px solid var(--gold-btn2);border-radius:14px;padding:14px;}
+.say-h{font-weight:800;color:var(--gold-deep);font-size:13px;margin-bottom:8px;}
+.say-body{font-size:16px;line-height:1.95;color:var(--ink);font-weight:700;}
+.say-note{margin-top:10px;font-size:12px;color:#8a6d2a;line-height:1.6;font-weight:600;}

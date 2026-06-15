@@ -203,9 +203,8 @@ function pickFromPool(cat){
   if(!state.recent)state.recent={};
   if(!state.recent[cat])state.recent[cat]=[];
   const recent=state.recent[cat];
-  const themes=['baseball','nature','mecha','history'];
-  // このジャンルがプールに存在するか
-  const present=themes.filter(t=>pool.some(p=>p.theme===t));
+  // このプールに実際にあるジャンルを使う（音読＝名作/昔話/寓話、作文・理科＝従来テーマ）
+  const present=[...new Set(pool.map(p=>p.theme))];
   // ジャンルごとの取り組み回数
   const counts={};present.forEach(t=>counts[t]=(cat==='sci'?((state.stats.sci[t]&&state.stats.sci[t].n)||0):((state.stats[cat]&&state.stats[cat][t]&&state.stats[cat][t].n)||0)));
   const totalN=present.reduce((a,t)=>a+counts[t],0);const avgN=present.length?totalN/present.length:0;
@@ -679,14 +678,9 @@ function selectChoice(item,idx){
   if(document.querySelector('#sciChoices .choice-btn.correct'))return; // already revealed
   sciSelected=idx;
   document.querySelectorAll('#sciChoices .choice-btn').forEach((b,i)=>b.classList.toggle('selected',i===idx));
-  document.getElementById('sciReason').style.display='block';
-  document.getElementById('sciFoot').innerHTML='<button class="btn btn-gold" id="sciDone">できた！ 見てもらう ▶</button>';
-  document.getElementById('sciDone').addEventListener('click',()=>revealScience(item));
-  setTimeout(()=>document.getElementById('sciArea').focus(),60);
+  revealScience(item); // えらんだら、書かせずに「理由の言い方」を見せる
 }
 function revealScience(item){
-  const text=document.getElementById('sciArea').value.trim();
-  if(text.length<5){alert('「〜だから」まで書いてみよう！みじかくてOK（れい：友だちとできるから）');return;}
   document.querySelectorAll('#sciChoices .choice-btn').forEach((b,i)=>{
     const c=item.choices[i];b.classList.remove('selected');
     b.classList.add(c.ok?'correct':'wrong');
@@ -695,18 +689,22 @@ function revealScience(item){
     b.disabled=true;
   });
   const chosen=item.choices[sciSelected];
+  const correct=item.choices.find(c=>c.ok)||chosen;
   recordSci(item.theme,chosen.ok);
   if(chosen.ok)clearWeakSci(item.theme,item.idx); else addWeakSci(item.theme,item.idx);
-  const head=chosen.ok?`🎉 ${praise()} ${item._review?'ニガテこくふく！':'考え方もバッチリ！'}`:`🎉 ${praise()} 自分で考えてえらべたのがえらい！`;
+  const head=chosen.ok?`🎉 ${praise()} ${item._review?'ニガテこくふく！':'考え方もバッチリ！'}`:`🎉 ${praise()} 自分でえらべたのがえらい！`;
   const viewsHtml=item.views.map(v=>`<div style="margin-top:6px;padding:9px 11px;background:#fff;border:1px solid var(--line);border-radius:10px;font-size:13px;line-height:1.6;color:#1c2c44">🔎 ${rubyize(v)}</div>`).join('');
-  const prompt=stripRuby(`小学4年生のぼくが、理科や社会の「なぜ？」に、三択からえらんで、その理由を考えました。中学受験（千代田区立九段中等教育学校）をめざしています。考えたことをいっぱいほめて、本当の答えもやさしく教えてください。\n\n【質問】${item.q}\n【ぼくがえらんだ答え】${chosen.t}\n【えらんだ理由】${text}`);
+  const sayModel=rubyize('答《こた》えは「'+correct.t+'」。なぜなら、'+item.a);
+  const prompt=stripRuby(`小学4年生のぼくが、理科や社会の「なぜ？」を三択で考えました。中学受験（千代田区立九段中等教育学校）をめざしています。ぼくはまだ、理由をうまく言葉にできません。えらんだ理由を、小4にもわかるやさしい言い方で教えてください。そのあと、考えたことをいっぱいほめてください。\n\n【質問】${item.q}\n【ぼくがえらんだ答え】${chosen.t}`);
+  document.getElementById('sciReason').style.display='none';
   document.getElementById('sciReply').innerHTML=
-    `<div class="sensei-reply"><div class="sr-head">${head}</div><div class="sr-body">つぎは、Gemini先生に見せて、ほめてもらおう！</div></div>`
+    `<div class="sensei-reply"><div class="sr-head">${head}</div></div>`
+    +`<div class="say-card"><div class="say-h">🗣️ りゆうの言い方（見本）</div><div class="say-body">「${sayModel}」</div><div class="say-note">↑ こえに出して言ってみよう！ じょうずに言えなくても大丈夫。声に出すうちに、だんだん自分の言葉になっていくよ。</div></div>`
+    +`<div class="sensei-reply" style="margin-top:10px"><div class="sr-body">もっと知りたいときは、Gemini先生に「言い方」を教えてもらおう！</div></div>`
     +geminiBox(prompt)
-    +`<div class="after-gemini">― Gemini先生に見せたあと、下の答えともくらべてみよう ―</div>`
-    +`<div class="sensei-reply" style="margin-top:8px"><div class="sr-body"><b>本当のところは…</b>\n${rubyize(item.a)}</div><div style="margin-top:10px;font-size:12px;font-weight:800;color:#1e7a44">いろんな見方があるよ👇</div>${viewsHtml}</div>`;
+    +`<div style="margin-top:12px;font-size:12px;font-weight:800;color:#1e7a44">いろんな見方があるよ👇</div>${viewsHtml}`;
   document.getElementById('sciFoot').innerHTML='<button class="btn btn-green" onclick="finishActivity(\'sci\')">クエストクリア！ ⚾</button>';
-  addLog('理科社会',item.q,'えらんだ：'+chosen.t+' ／ 理由：'+text,'答え：'+item.a);
+  addLog('理科社会',item.q,'えらんだ：'+chosen.t,'答え：'+item.a);
 }
 
 // ===== Activity router =====
