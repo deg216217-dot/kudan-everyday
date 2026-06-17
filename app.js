@@ -11,15 +11,36 @@ const THEMES=[
   {id:'meisaku',e:'📖',n:'名作物語'},
   {id:'mukashi',e:'🏯',n:'日本の昔話'},
   {id:'guwa',e:'🦊',n:'イソップ寓話'},
+  {id:'kurashi',e:'💡',n:'くらしの理科'},
 ];
 function themeOf(id){return THEMES.find(t=>t.id===id)||THEMES[0];}
-const QUESTS=[
-  {id:'duo', icon:'🦉',name:'Duolingo',     desc:'デイリークエストをクリア', type:'check'},
-  {id:'calc',icon:'🔢',name:'計算',         desc:'小4の問題に5問チャレンジ', type:'activity'},
-  {id:'read',icon:'📖',name:'音読',         desc:'お話を声に出して読もう',   type:'activity'},
-  {id:'write',icon:'✍️',name:'作文',        desc:'穴うめで意見文を完成',     type:'activity'},
-  {id:'sci', icon:'🔬',name:'理科社会のタネ',desc:'今日のなぜ？を考える',     type:'activity'},
-];
+const QUEST_DEFS={
+  duo:{icon:'🦉',name:'Duolingo',desc:'デイリークエストをクリア',type:'check'},
+  calc:{icon:'🔢',name:'計算',desc:'小4の問題に5問チャレンジ',type:'activity'},
+  read:{icon:'📖',name:'音読',desc:'お話を声に出して読もう',type:'activity'},
+  write:{icon:'✍️',name:'作文',desc:'穴うめで意見文を完成',type:'activity'},
+  sci:{icon:'🔬',name:'理科社会のタネ',desc:'今日のなぜ？を考える',type:'activity'},
+  q_kanji:{icon:'🈶',name:'漢字クイズ',desc:'漢字の読み・意味',type:'activity'},
+  q_kenmin:{icon:'🗾',name:'都道府県クイズ',desc:'日本の都道府県',type:'activity'},
+  q_news:{icon:'📰',name:'ニュースの言葉',desc:'時事・社会のことば',type:'activity'},
+  q_units:{icon:'📏',name:'たんいクイズ',desc:'量・単位のかんかく',type:'activity'},
+  q_kotowaza:{icon:'💬',name:'ことわざ・慣用句',desc:'ことばの意味',type:'activity'},
+};
+// 毎日固定（Duolingo・計算・音読）＋日替わり2枠＝合計5。1週間で全分野に触れる。
+const FIXED_QUESTS=['duo','calc','read'];
+const ROTATING_QUESTS=['write','sci','q_kanji','q_kenmin','q_news','q_units','q_kotowaza'];
+function dayIndex(){const d=new Date();return Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/86400000);}
+function todaysQuestIds(){
+  const n=ROTATING_QUESTS.length,di=dayIndex();
+  return FIXED_QUESTS.concat([ROTATING_QUESTS[((di*2)%n+n)%n],ROTATING_QUESTS[((di*2+1)%n+n)%n]]);
+}
+const QUIZZES={
+  q_kanji:{title:'🈶 漢字クイズ',sub:'漢字の読み・意味',pool:(typeof KANJI!=='undefined'?KANJI:[])},
+  q_kenmin:{title:'🗾 都道府県クイズ',sub:'日本の都道府県',pool:(typeof KENMIN!=='undefined'?KENMIN:[])},
+  q_news:{title:'📰 ニュースの言葉',sub:'時事・社会のことば',pool:(typeof NEWS!=='undefined'?NEWS:[])},
+  q_units:{title:'📏 たんいクイズ',sub:'量・単位のかんかく',pool:(typeof UNITS!=='undefined'?UNITS:[])},
+  q_kotowaza:{title:'💬 ことわざ・慣用句',sub:'ことばの意味',pool:(typeof KOTOWAZA!=='undefined'?KOTOWAZA:[])},
+};
 const AOZORA=[
   {title:'ごん狐',author:'新美南吉',mins:'15分',e:'🦊',url:'https://www.aozora.gr.jp/cards/000121/files/628_14895.html'},
   {title:'手袋を買いに',author:'新美南吉',mins:'10分',e:'🧤',url:'https://www.aozora.gr.jp/cards/000121/files/637_13341.html'},
@@ -232,7 +253,8 @@ function pickFromPool(cat){
 // ============ RENDER TODAY ============
 function renderQuests(){
   const list=document.getElementById('questList');list.innerHTML='';
-  QUESTS.forEach(q=>{
+  todaysQuestIds().forEach(id=>{
+    const q=Object.assign({id:id},QUEST_DEFS[id]);
     const done=!!state.checks[q.id];
     const el=document.createElement('div');
     el.className='quest'+(done?' done':'');
@@ -704,9 +726,69 @@ function openActivity(id){
   if(id==='read'){renderReading(pickFromPool('read'));}
   else if(id==='write'){renderWriting(pickFromPool('write'));}
   else if(id==='sci'){renderScience(pickFromPool('sci'));}
+  else if(QUIZZES[id]){openQuiz(id);}
 }
 function finishActivity(id){closeScreen();completeQuest(id);}
 function closeScreen(){document.getElementById('screen').classList.remove('show');document.getElementById('screenInner').innerHTML='';}
+
+// ===== ことば・教養クイズ（漢字/都道府県/ニュース/単位/ことわざ 共通） =====
+let quizState=null;
+function openQuiz(id){
+  const def=QUIZZES[id];const pool=(def&&def.pool)||[];
+  if(!pool.length){closeScreen();return;}
+  const rk='quiz_'+id;state.recent=state.recent||{};if(!Array.isArray(state.recent[rk]))state.recent[rk]=[];
+  const recent=state.recent[rk];
+  let cand=[];for(let i=0;i<pool.length;i++)if(recent.indexOf(i)<0)cand.push(i);
+  if(!cand.length)cand=pool.map((_,i)=>i);
+  const idx=cand[Math.floor(Math.random()*cand.length)];
+  recent.push(idx);const cap=Math.max(4,Math.floor(pool.length/2));while(recent.length>cap)recent.shift();
+  state.recent[rk]=recent;save();
+  quizState={id,def,item:pool[idx]};renderQuiz();
+}
+function renderQuiz(){
+  const def=quizState.def,item=quizState.item;
+  document.getElementById('screenInner').innerHTML=`
+   <div class="screen show" style="position:static;display:flex;">
+    <div class="scr-head"><div class="x" onclick="closeScreen()">✕</div>
+      <div><div class="ht">${def.title}</div><div class="hs">${def.sub}</div></div></div>
+    <div class="scr-body">
+      <div class="ai-card"><div class="ai-label">❓ もんだい</div>
+        <div style="font-size:17px;line-height:1.85;font-weight:700;color:#1c2c44">${rubyize(item.q)}</div></div>
+      <div class="sec-sub" style="margin-top:14px">どれだと思う？ タップしてえらぼう（まちがえても大丈夫！）</div>
+      <div id="quizChoices"></div>
+      <div id="quizReply"></div>
+    </div>
+    <div class="scr-foot" id="quizFoot"></div>
+   </div>`;
+  const cbox=document.getElementById('quizChoices');
+  item.choices.forEach((c,idx)=>{
+    const b=document.createElement('button');b.className='choice-btn';b.dataset.idx=idx;
+    b.innerHTML=`<div class="choice-row"><span class="choice-mark">${'ABC'[idx]}</span><span class="choice-text">${rubyize(c.t)}</span></div>`;
+    b.addEventListener('click',()=>revealQuiz(idx));
+    cbox.appendChild(b);
+  });
+}
+function revealQuiz(sel){
+  if(document.querySelector('#quizChoices .choice-btn.correct'))return;
+  const id=quizState.id,def=quizState.def,item=quizState.item;
+  document.querySelectorAll('#quizChoices .choice-btn').forEach((b,i)=>{
+    const c=item.choices[i];b.classList.add(c.ok?'correct':'wrong');
+    if(i===sel)b.classList.add('chosen-outline');
+    if(c.ok&&!b.querySelector('.choice-comment')){const cm=document.createElement('div');cm.className='choice-comment';cm.textContent='✓ せいかい！';b.appendChild(cm);}
+    b.disabled=true;
+  });
+  const ok=!!item.choices[sel].ok;
+  recordQuiz(id,ok);
+  const head=ok?`🎉 ${praise()} せいかい！`:`🎉 ${praise()} おしい！ おぼえておこう`;
+  document.getElementById('quizReply').innerHTML=`<div class="sensei-reply"><div class="sr-head">${head}</div><div class="sr-body">${rubyize(item.a)}</div></div>`;
+  document.getElementById('quizFoot').innerHTML=`<button class="btn btn-green" onclick="finishActivity('${id}')">クエストクリア！ ⚾</button>`;
+  addLog(def.title,item.q,'えらんだ：'+item.choices[sel].t,'答え：'+stripRuby(item.a));
+}
+function recordQuiz(id,ok){
+  state.stats=state.stats||{};state.stats.quiz=state.stats.quiz||{};
+  const o=state.stats.quiz[id]||(state.stats.quiz[id]={c:0,w:0});
+  if(ok)o.c++;else o.w++;save();
+}
 
 // ===== ポイント =====
 function renderZukan(){
