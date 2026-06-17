@@ -26,10 +26,12 @@ const QUEST_DEFS={
   q_units:{icon:'📏',name:'たんいクイズ',desc:'量・単位のかんかく',type:'activity'},
   q_kotowaza:{icon:'💬',name:'ことわざ・慣用句',desc:'ことばの意味',type:'activity'},
   q_graph:{icon:'📊',name:'資料・グラフ',desc:'グラフを読みとろう',type:'activity'},
+  kokugo:{icon:'📕',name:'国語（読む・書く）',desc:'読んで、考えて、書く',type:'activity'},
+  shiryo:{icon:'📊',name:'資料・社会（読みとり）',desc:'資料を読んで考える',type:'activity'},
 };
 // 毎日固定（Duolingo・計算・音読）＋日替わり2枠＝合計5。1週間で全分野に触れる。
-const FIXED_QUESTS=['duo','calc','read'];
-const ROTATING_QUESTS=['write','sci','q_kanji','q_kenmin','q_news','q_units','q_kotowaza','q_graph'];
+const FIXED_QUESTS=['duo','kokugo','calc'];
+const ROTATING_QUESTS=['read','write','sci','shiryo','q_kanji','q_kenmin','q_news','q_units','q_kotowaza'];
 function dayIndex(){const d=new Date();return Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/86400000);}
 function todaysQuestIds(){
   const n=ROTATING_QUESTS.length,di=dayIndex();
@@ -609,6 +611,126 @@ function renderReading(item){
   document.getElementById('readDone').addEventListener('click',()=>finishActivity('read'));
 }
 
+// ===== 資料・社会（読みとり）セット =====
+let shiryoState=null;
+function pickShiryo(){
+  const pool=(typeof SHIRYO!=='undefined')?SHIRYO:[];if(!pool.length)return null;
+  state.recent=state.recent||{};if(!Array.isArray(state.recent.shiryo))state.recent.shiryo=[];
+  const rec=state.recent.shiryo;let cand=[];for(let i=0;i<pool.length;i++)if(rec.indexOf(i)<0)cand.push(i);
+  if(!cand.length)cand=pool.map((_,i)=>i);
+  const idx=cand[Math.floor(Math.random()*cand.length)];
+  rec.push(idx);const cap=Math.max(3,Math.floor(pool.length/2));while(rec.length>cap)rec.shift();
+  state.recent.shiryo=rec;save();return {item:pool[idx]};
+}
+function recordShiryo(ok){state.stats=state.stats||{};state.stats.shiryo=state.stats.shiryo||{c:0,w:0};if(ok)state.stats.shiryo.c++;else state.stats.shiryo.w++;save();}
+function shiryoGate(){
+  if(!shiryoState)return;
+  const need=shiryoState.item.qs.length+1,got=Object.keys(shiryoState.answered).length+(shiryoState.why?1:0);
+  const ok=got>=need,btn=document.getElementById('shiryoDone');
+  if(btn){btn.disabled=!ok;btn.textContent=ok?'読みとれた！クリア ⚾':'えらんでからクリア ⚾';}
+}
+function shiryoAnswerQ(qi,ci){
+  const box=document.querySelector('.sq-choices[data-qi="'+qi+'"]');if(!box||box.querySelector('.choice-btn.correct'))return;
+  const q=shiryoState.item.qs[qi];
+  box.querySelectorAll('.choice-btn').forEach((b,i)=>{const c=q.choices[i];b.classList.add(c.ok?'correct':'wrong');if(i===ci)b.classList.add('chosen-outline');if(c.ok&&!b.querySelector('.choice-comment')){const cm=document.createElement('div');cm.className='choice-comment';cm.textContent='✓ せいかい！';b.appendChild(cm);}b.disabled=true;});
+  recordShiryo(!!q.choices[ci].ok);
+  document.querySelector('.sq-reply[data-qi="'+qi+'"]').innerHTML='<div class="sensei-reply" style="margin-top:8px"><div class="sr-body">'+(q.choices[ci].ok?'🎉 ':'🔍 ')+rubyize(q.a)+'</div></div>';
+  shiryoState.answered[qi]=true;shiryoGate();
+}
+function shiryoAnswerWhy(ci){
+  const box=document.getElementById('swChoices');if(!box||box.querySelector('.choice-btn.correct'))return;
+  const wy=shiryoState.item.why;
+  box.querySelectorAll('.choice-btn').forEach((b,i)=>{const c=wy.choices[i];b.classList.add(c.ok?'correct':'wrong');if(i===ci)b.classList.add('chosen-outline');if(c.ok&&!b.querySelector('.choice-comment')){const cm=document.createElement('div');cm.className='choice-comment';cm.textContent='✓ なるほど！';b.appendChild(cm);}b.disabled=true;});
+  recordShiryo(!!wy.choices[ci].ok);
+  document.getElementById('swReply').innerHTML='<div class="sensei-reply"><div class="sr-head">💡 理由の言い方（見本）</div><div class="sr-body">'+rubyize(wy.a)+'</div></div>';
+  shiryoState.why=true;shiryoGate();
+}
+function renderShiryo(picked){
+  if(!picked){closeScreen();return;}
+  const item=picked.item;shiryoState={item:item,answered:{},why:false};
+  const tbl='<table class="sr-table"><tbody>'+item.rows.map(r=>'<tr><th>'+rubyize(r.l)+'</th><td>'+rubyize(r.v)+'</td></tr>').join('')+'</tbody></table>';
+  const qsHtml=item.qs.map((q,qi)=>'<div class="q-item" style="margin-top:14px"><div class="qq">📊（'+(qi+1)+'）'+rubyize(q.q)+'</div><div class="sq-choices" data-qi="'+qi+'"></div><div class="sq-reply" data-qi="'+qi+'"></div></div>').join('');
+  document.getElementById('screenInner').innerHTML=`
+   <div class="screen show" style="position:static;display:flex;">
+    <div class="scr-head"><div class="x" onclick="closeScreen()">✕</div><div><div class="ht">📊 資料・社会（読みとり）</div><div class="hs">${item.title}</div></div></div>
+    <div class="scr-body">
+      <div class="ai-card"><div class="ai-label">📋 資料を読もう</div><div style="font-size:13px;color:#33414f;margin-bottom:8px">${rubyize(item.intro||'')}</div>${tbl}</div>
+      ${qsHtml}
+      <div class="q-item" style="margin-top:18px">
+        <div class="qq">🤔 ${rubyize(item.why.q)}</div>
+        <div class="q-note">「いちばん近い考え」をえらぼう。えらんだら、理由の言い方の見本が出るよ。</div>
+        <div id="swChoices"></div><div id="swReply"></div>
+      </div>
+    </div>
+    <div class="scr-foot"><button class="btn btn-green" id="shiryoDone" disabled>えらんでからクリア ⚾</button></div>
+   </div>`;
+  item.qs.forEach((q,qi)=>{const box=document.querySelector('.sq-choices[data-qi="'+qi+'"]');q.choices.forEach((c,ci)=>{const b=document.createElement('button');b.className='choice-btn';b.innerHTML='<div class="choice-row"><span class="choice-mark">'+'ABC'[ci]+'</span><span class="choice-text">'+rubyize(c.t)+'</span></div>';b.addEventListener('click',()=>shiryoAnswerQ(qi,ci));box.appendChild(b);});});
+  const sw=document.getElementById('swChoices');item.why.choices.forEach((c,ci)=>{const b=document.createElement('button');b.className='choice-btn';b.innerHTML='<div class="choice-row"><span class="choice-mark">'+'ABC'[ci]+'</span><span class="choice-text">'+rubyize(c.t)+'</span></div>';b.addEventListener('click',()=>shiryoAnswerWhy(ci));sw.appendChild(b);});
+  document.getElementById('shiryoDone').addEventListener('click',()=>{finishActivity('shiryo');});
+}
+// ===== 国語（読む・書く）セット =====
+let kokuState=null;
+function pickKokugo(){
+  const pool=(typeof KOKUGO!=='undefined')?KOKUGO:[];if(!pool.length)return null;
+  state.recent=state.recent||{};if(!Array.isArray(state.recent.kokugo))state.recent.kokugo=[];
+  const rec=state.recent.kokugo;let cand=[];for(let i=0;i<pool.length;i++)if(rec.indexOf(i)<0)cand.push(i);
+  if(!cand.length)cand=pool.map((_,i)=>i);
+  const idx=cand[Math.floor(Math.random()*cand.length)];
+  rec.push(idx);const cap=Math.max(3,Math.floor(pool.length/2));while(rec.length>cap)rec.shift();
+  state.recent.kokugo=rec;save();
+  return {item:pool[idx],idx:idx};
+}
+function recordKokugo(ok){state.stats=state.stats||{};state.stats.kokugo=state.stats.kokugo||{c:0,w:0};if(ok)state.stats.kokugo.c++;else state.stats.kokugo.w++;save();}
+function kokuGate(){
+  if(!kokuState)return;
+  const need=kokuState.item.qs.length,got=Object.keys(kokuState.answered).length;
+  const ok=(got>=need)&&kokuState.wrote;
+  const btn=document.getElementById('kokuDone');if(btn){btn.disabled=!ok;btn.textContent=ok?'読んで・考えた！クリア ⚾':'こたえてからクリア ⚾';}
+}
+function kokuAnswer(qi,ci){
+  const box=document.querySelector('.kq-choices[data-qi="'+qi+'"]');if(!box||box.querySelector('.choice-btn.correct'))return;
+  const q=kokuState.item.qs[qi];
+  box.querySelectorAll('.choice-btn').forEach((b,i)=>{const c=q.choices[i];b.classList.add(c.ok?'correct':'wrong');if(i===ci)b.classList.add('chosen-outline');if(c.ok&&!b.querySelector('.choice-comment')){const cm=document.createElement('div');cm.className='choice-comment';cm.textContent='✓ せいかい！';b.appendChild(cm);}b.disabled=true;});
+  const ok=!!q.choices[ci].ok;recordKokugo(ok);
+  document.querySelector('.kq-reply[data-qi="'+qi+'"]').innerHTML='<div class="sensei-reply" style="margin-top:8px"><div class="sr-body">'+(ok?'🎉 ':'🔍 ')+rubyize(q.a)+'</div></div>';
+  kokuState.answered[qi]=true;kokuGate();
+}
+function renderKokugo(picked){
+  if(!picked){closeScreen();return;}
+  const item=picked.item;kokuState={item:item,answered:{},wrote:false};
+  const qsHtml=item.qs.map((q,qi)=>'<div class="q-item" style="margin-top:14px"><div class="qq">📝（'+(qi+1)+'）'+rubyize(q.q)+'</div><div class="kq-choices" data-qi="'+qi+'"></div><div class="kq-reply" data-qi="'+qi+'"></div></div>').join('');
+  const tmplH=item.write.tmpl?('<div class="tmpl-box">'+rubyize(item.write.tmpl)+'</div>'):'';
+  document.getElementById('screenInner').innerHTML=`
+   <div class="screen show" style="position:static;display:flex;">
+    <div class="scr-head"><div class="x" onclick="closeScreen()">✕</div><div><div class="ht">📕 国語（読む・書く）</div><div class="hs">${item.title}</div></div></div>
+    <div class="scr-body">
+      <div class="ai-card"><div class="ai-label">📖 文章を読もう（声に出してもOK）</div><div class="ai-story">${rubyize((item.passage||'').replace(/\n/g,'<br>'))}</div></div>
+      ${qsHtml}
+      <div class="q-item" style="margin-top:16px">
+        <div class="qq">✍️ ${rubyize(item.write.q)}</div>
+        <div class="q-note">下の「型」を使って、自分のことばで書こう（40〜60字を目あすに。長く書けたら花丸！）。むずかしければ「見本」を見てね。</div>
+        ${tmplH}
+        <textarea class="answer-area" id="kokuWrite" placeholder="自分のことばで書こう（必須）"></textarea>
+        <div id="kokuCount" class="char-count">いま 0字</div>
+        <button class="btn btn-ghost btn-sm" id="kokuEx" style="margin-top:8px">📑 見本を見る</button>
+        <div id="kokuExBox"></div>
+      </div>
+    </div>
+    <div class="scr-foot"><button class="btn btn-green" id="kokuDone" disabled>こたえてからクリア ⚾</button></div>
+   </div>`;
+  item.qs.forEach((q,qi)=>{
+    const box=document.querySelector('.kq-choices[data-qi="'+qi+'"]');
+    q.choices.forEach((c,ci)=>{const b=document.createElement('button');b.className='choice-btn';b.innerHTML='<div class="choice-row"><span class="choice-mark">'+'ABC'[ci]+'</span><span class="choice-text">'+rubyize(c.t)+'</span></div>';b.addEventListener('click',()=>kokuAnswer(qi,ci));box.appendChild(b);});
+  });
+  const wt=document.getElementById('kokuWrite');
+  wt.addEventListener('input',()=>{const n=wt.value.trim().length;kokuState.wrote=n>=4;const cc=document.getElementById('kokuCount');if(cc)cc.textContent='いま '+n+'字';kokuGate();});
+  document.getElementById('kokuEx').addEventListener('click',()=>{document.getElementById('kokuExBox').innerHTML='<div class="sensei-reply"><div class="sr-head">📑 こんなふうに書けたら花丸！</div><div class="sr-body">'+(item.write.ex||[]).map(e=>rubyize(e)).join('\n\n')+'</div></div>';});
+  document.getElementById('kokuDone').addEventListener('click',()=>{
+    const ans=document.getElementById('kokuWrite').value.trim();
+    addLog('国語（読む・書く）',item.title+'：'+stripRuby(item.write.q),ans,'見本：'+(item.write.ex&&item.write.ex[0]?stripRuby(item.write.ex[0]):''));
+    finishActivity('kokugo');
+  });
+}
 // ===== 作文 =====
 function renderWriting(item){
   const th=themeOf(item.theme);
@@ -743,6 +865,8 @@ function openActivity(id){
   if(id==='read'){renderReading(pickFromPool('read'));}
   else if(id==='write'){renderWriting(pickFromPool('write'));}
   else if(id==='sci'){renderScience(pickFromPool('sci'));}
+  else if(id==='kokugo'){renderKokugo(pickKokugo());}
+  else if(id==='shiryo'){renderShiryo(pickShiryo());}
   else if(QUIZZES[id]){openQuiz(id);}
 }
 function finishActivity(id){closeScreen();completeQuest(id);}
@@ -911,6 +1035,8 @@ function renderWeekly(){
   const sci=state.stats.sci||{};Object.keys(sci).forEach(k=>consider('理科社会の「'+(TH[k]||k)+'」',sci[k].c,sci[k].w));
   const QL={q_kanji:'漢字',q_kenmin:'都道府県',q_news:'ニュースの言葉',q_units:'たんい',q_kotowaza:'ことわざ',q_graph:'資料・グラフ'};
   const qz=state.stats.quiz||{};Object.keys(qz).forEach(k=>consider((QL[k]||k)+'クイズ',qz[k].c,qz[k].w));
+  if(state.stats.kokugo)consider('国語の読み取り',state.stats.kokugo.c,state.stats.kokugo.w);
+  if(state.stats.shiryo)consider('資料の読みとり',state.stats.shiryo.c,state.stats.shiryo.w);
   let comment;
   if(daysActive===0)comment='今週はまだ取り組みがありません。まずは1つのクエストから、いっしょに始めてみましょう。';
   else if(daysFull>=5)comment='今週はすばらしいペース！毎日の習慣がしっかり身についています。';

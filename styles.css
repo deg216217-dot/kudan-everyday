@@ -357,3 +357,9 @@ body.big-ui .sec-sub{font-size:13.5px;}
 .wk-weak{margin-top:12px;font-size:13px;font-weight:700;color:#7d5e15;background:#fdf3da;border:1px solid rgba(212,134,10,.3);border-radius:10px;padding:10px 12px;line-height:1.5;}
 .wk-weak b{color:var(--red);}
 .wk-comment{margin-top:10px;font-size:13px;line-height:1.6;color:var(--ink2);font-weight:600;}
+
+/* 資料テーブル */
+.sr-table{width:100%;border-collapse:collapse;font-size:13.5px;}
+.sr-table th,.sr-table td{border:1px solid #d8e0ea;padding:7px 10px;text-align:left;}
+.sr-table th{background:#eef4ff;color:#1c2c44;font-weight:700;}
+.sr-table td{background:#fff;color:#33414f;font-weight:600;}
