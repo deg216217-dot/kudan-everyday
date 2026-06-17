@@ -890,11 +890,41 @@ function renderRecord(){
     if(k===state.today)e.classList.add('today');
     grid.appendChild(e);
   }
+  renderWeekly();
   renderInsights();
   renderNigate();
 }
 function pct(c,w){const t=c+w;return t===0?null:Math.round(c/t*100);}
 function barColor(p){return p>=80?'var(--hit)':p>=50?'#e0a012':'#dd5049';}
+function renderWeekly(){
+  const box=document.getElementById('weeklyBox');if(!box)return;
+  let daysActive=0,daysFull=0,weekPts=0;
+  for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()-i);const k=ymd(d);
+    let c=0;if(k===state.today)c=Object.values(state.checks).filter(Boolean).length;else if(state.history[k])c=state.history[k].count;
+    if(c>0)daysActive++;if(c===5)daysFull++;
+    const g=state.gachaLog[k];if(g)weekPts+=(g.points!=null?g.points:(g.money||0));}
+  const streak=calcStreak();
+  let weak=null;
+  function consider(label,c,w){const n=c+w;if(n>=3){const acc=Math.round(c/n*100);if(!weak||acc<weak.acc)weak={label:label,acc:acc,n:n};}}
+  const calc=state.stats.calc||{};Object.keys(calc).forEach(k=>consider('計算の「'+k+'」',calc[k].c,calc[k].w));
+  const TH={baseball:'野球・スポーツ',nature:'生き物・宇宙',mecha:'のりもの・メカ',history:'歴史・冒険',kurashi:'くらしの理科'};
+  const sci=state.stats.sci||{};Object.keys(sci).forEach(k=>consider('理科社会の「'+(TH[k]||k)+'」',sci[k].c,sci[k].w));
+  const QL={q_kanji:'漢字',q_kenmin:'都道府県',q_news:'ニュースの言葉',q_units:'たんい',q_kotowaza:'ことわざ',q_graph:'資料・グラフ'};
+  const qz=state.stats.quiz||{};Object.keys(qz).forEach(k=>consider((QL[k]||k)+'クイズ',qz[k].c,qz[k].w));
+  let comment;
+  if(daysActive===0)comment='今週はまだ取り組みがありません。まずは1つのクエストから、いっしょに始めてみましょう。';
+  else if(daysFull>=5)comment='今週はすばらしいペース！毎日の習慣がしっかり身についています。';
+  else if(daysFull>=3)comment='いいペースで続いています。あと少しで「毎日クリア」も見えてきました。';
+  else comment='少しずつ進んでいます。短い時間でも、毎日つづけることが力になります。';
+  let html='<div class="weekly"><div class="wk-h">📅 今週のまとめ（保護者用）</div><div class="wk-grid">'
+    +'<div class="wk-cell"><div class="wk-n">'+daysActive+'<span>日</span></div><div class="wk-l">取り組んだ日</div></div>'
+    +'<div class="wk-cell"><div class="wk-n">'+daysFull+'<span>日</span></div><div class="wk-l">5つ全クリア</div></div>'
+    +'<div class="wk-cell"><div class="wk-n">'+streak+'<span></span></div><div class="wk-l">いまの連勝🔥</div></div>'
+    +'<div class="wk-cell"><div class="wk-n">'+weekPts+'<span>pt</span></div><div class="wk-l">今週のpt</div></div></div>';
+  if(weak)html+='<div class="wk-weak">いま、もう一歩 → <b>'+weak.label+'</b>（正答率 '+weak.acc+'％・'+weak.n+'回）</div>';
+  html+='<div class="wk-comment">'+comment+'</div></div>';
+  box.innerHTML=html;
+}
 function renderInsights(){
   const box=document.getElementById('insights');if(!box)return;
   const TH={baseball:{e:'⚾',n:'野球・スポーツ'},nature:{e:'🦖',n:'生き物・宇宙'},mecha:{e:'🚀',n:'のりもの・メカ'},history:{e:'⚔️',n:'歴史・冒険'}};

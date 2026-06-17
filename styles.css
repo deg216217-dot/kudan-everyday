@@ -345,3 +345,15 @@ body.big-ui .answer-area{font-size:17px;}
 body.big-ui .sensei-reply .sr-body{font-size:16px;}
 body.big-ui .gacha-result{font-size:52px;}
 body.big-ui .sec-sub{font-size:13.5px;}
+
+/* 今週のまとめ */
+.weekly{background:linear-gradient(180deg,#fff8ea,#fff);border:1.5px solid var(--gold-btn2);border-radius:16px;padding:16px;margin-top:14px;box-shadow:0 3px 12px rgba(28,44,68,.06);}
+.wk-h{font-weight:800;color:var(--gold-deep);font-size:14px;margin-bottom:12px;}
+.wk-grid{display:flex;flex-wrap:wrap;}
+.wk-cell{flex:1;min-width:68px;text-align:center;padding:6px 3px;}
+.wk-n{font-family:'Mochiy Pop One',sans-serif;font-size:24px;color:var(--ink);line-height:1.1;}
+.wk-n span{font-size:11px;color:var(--muted);font-weight:700;margin-left:2px;}
+.wk-l{font-size:11px;color:var(--ink2);font-weight:700;margin-top:3px;}
+.wk-weak{margin-top:12px;font-size:13px;font-weight:700;color:#7d5e15;background:#fdf3da;border:1px solid rgba(212,134,10,.3);border-radius:10px;padding:10px 12px;line-height:1.5;}
+.wk-weak b{color:var(--red);}
+.wk-comment{margin-top:10px;font-size:13px;line-height:1.6;color:var(--ink2);font-weight:600;}
