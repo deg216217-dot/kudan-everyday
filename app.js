@@ -29,10 +29,11 @@ const QUEST_DEFS={
   kokugo:{icon:'📕',name:'国語（読む・書く）',desc:'読んで、考えて、書く',type:'activity'},
   shiryo:{icon:'📊',name:'資料・社会（読みとり）',desc:'資料を読んで考える',type:'activity'},
   sansu:{icon:'🧮',name:'考える算数',desc:'きまり・割合・単位を考える',type:'activity'},
+  rika:{icon:'🔬',name:'理科の観察・実験',desc:'観察して「なぜ？」を考える',type:'activity'},
 };
 // 毎日固定（Duolingo・計算・音読）＋日替わり2枠＝合計5。1週間で全分野に触れる。
 const FIXED_QUESTS=['duo','kokugo','calc'];
-const ROTATING_QUESTS=['read','write','sci','shiryo','sansu','q_kanji','q_kenmin','q_news','q_units','q_kotowaza'];
+const ROTATING_QUESTS=['read','write','sci','shiryo','sansu','rika','q_kanji','q_kenmin','q_news','q_units','q_kotowaza'];
 function dayIndex(){const d=new Date();return Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/86400000);}
 function todaysQuestIds(){
   const n=ROTATING_QUESTS.length,di=dayIndex();
@@ -682,6 +683,16 @@ function renderSansu(){
     fin:{q:item.how.q,note:'「考え方」としていちばん正しいものをえらぼう。えらぶと、式や手順の見本が出るよ。',choices:item.how.choices,a:item.how.a,head:'💡 考え方（見本）'},
     doneWait:'えらんでからクリア ⚾',doneOK:'考えぬいた！クリア ⚾'});
 }
+function renderRika(){
+  const pool=(typeof RIKA!=='undefined')?RIKA:[];if(!pool.length){closeScreen();return;}
+  const item=pool[pickIdx('rika',pool.length)];
+  let top='<div style="font-size:13.5px;color:#33414f;line-height:1.85">'+rubyize(item.intro||'')+'</div>';
+  if(item.rows&&item.rows.length)top+='<div style="margin-top:8px">'+srTable(item.rows)+'</div>';
+  renderChoiceSet({id:'rika',statKey:'rika',label:'🔬 理科の観察・実験',hs:item.title,topLabel:'🔍 観察・実験',
+    topHTML:top,qIcon:'🔬',qs:item.qs,
+    fin:{q:item.how.q,note:'「なぜ？」にいちばん近い説明をえらぼう。えらぶと、説明の見本が出るよ。',choices:item.how.choices,a:item.how.a,head:'💡 なぜ？の説明（見本）'},
+    doneWait:'えらんでからクリア ⚾',doneOK:'わかった！クリア ⚾'});
+}
 // ===== 国語（読む・書く）セット =====
 let kokuState=null;
 function pickKokugo(){
@@ -882,6 +893,7 @@ function openActivity(id){
   else if(id==='kokugo'){renderKokugo(pickKokugo());}
   else if(id==='shiryo'){renderShiryo();}
   else if(id==='sansu'){renderSansu();}
+  else if(id==='rika'){renderRika();}
   else if(QUIZZES[id]){openQuiz(id);}
 }
 function finishActivity(id){closeScreen();completeQuest(id);}
@@ -1053,6 +1065,7 @@ function renderWeekly(){
   if(state.stats.kokugo)consider('国語の読み取り',state.stats.kokugo.c,state.stats.kokugo.w);
   if(state.stats.shiryo)consider('資料の読みとり',state.stats.shiryo.c,state.stats.shiryo.w);
   if(state.stats.sansu)consider('考える算数',state.stats.sansu.c,state.stats.sansu.w);
+  if(state.stats.rika)consider('理科の観察',state.stats.rika.c,state.stats.rika.w);
   let comment;
   if(daysActive===0)comment='今週はまだ取り組みがありません。まずは1つのクエストから、いっしょに始めてみましょう。';
   else if(daysFull>=5)comment='今週はすばらしいペース！毎日の習慣がしっかり身についています。';
