@@ -97,6 +97,14 @@
     </div>
     <div class="sec-title">九段中のしくみ（保護者メモ）</div>
     <div class="sec-sub">報告書200＋適性1(国語)200＋適性2(資料)300＋適性3(理数)300＝1000点。配点の6割が算数・理科・資料系。報告書は小4から入るので学校の成績も大事。アプリは「毎日の習慣づけ」と「適性検査でのびる思考力（読む・考える・選んで理由を書く）」をねらっています。</div>
+    <div class="sec-title" style="margin-top:24px">データの保存・復元（保護者用）</div>
+    <div class="sec-sub">機種変更やキャッシュ削除で記録が消えないよう、ときどき保存を。下の文字を全部コピーして、メモやメールに保存しておけば、いつでも復元できます。</div>
+    <textarea id="backupArea" class="answer-area" style="min-height:64px;font-size:11px;line-height:1.4" readonly></textarea>
+    <div style="display:flex;gap:9px;margin-top:8px;align-items:center">
+      <button class="btn btn-ghost btn-sm" id="backupCopy" style="flex:1;width:auto;min-width:0">📋 バックアップをコピー</button>
+      <button class="btn btn-ghost btn-sm" id="restoreBtn" style="flex:1;width:auto;min-width:0">⏪ 貼り付けて復元</button>
+    </div>
+    <div id="backupMsg" class="sec-sub" style="margin-top:6px;min-height:16px"></div>
     <button class="reset" id="resetAllBtn">全データを初期化（保護者用）</button>
   </div>
 </div>

@@ -25,10 +25,11 @@ const QUEST_DEFS={
   q_news:{icon:'📰',name:'ニュースの言葉',desc:'時事・社会のことば',type:'activity'},
   q_units:{icon:'📏',name:'たんいクイズ',desc:'量・単位のかんかく',type:'activity'},
   q_kotowaza:{icon:'💬',name:'ことわざ・慣用句',desc:'ことばの意味',type:'activity'},
+  q_graph:{icon:'📊',name:'資料・グラフ',desc:'グラフを読みとろう',type:'activity'},
 };
 // 毎日固定（Duolingo・計算・音読）＋日替わり2枠＝合計5。1週間で全分野に触れる。
 const FIXED_QUESTS=['duo','calc','read'];
-const ROTATING_QUESTS=['write','sci','q_kanji','q_kenmin','q_news','q_units','q_kotowaza'];
+const ROTATING_QUESTS=['write','sci','q_kanji','q_kenmin','q_news','q_units','q_kotowaza','q_graph'];
 function dayIndex(){const d=new Date();return Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/86400000);}
 function todaysQuestIds(){
   const n=ROTATING_QUESTS.length,di=dayIndex();
@@ -40,6 +41,7 @@ const QUIZZES={
   q_news:{title:'📰 ニュースの言葉',sub:'時事・社会のことば',pool:(typeof NEWS!=='undefined'?NEWS:[])},
   q_units:{title:'📏 たんいクイズ',sub:'量・単位のかんかく',pool:(typeof UNITS!=='undefined'?UNITS:[])},
   q_kotowaza:{title:'💬 ことわざ・慣用句',sub:'ことばの意味',pool:(typeof KOTOWAZA!=='undefined'?KOTOWAZA:[])},
+  q_graph:{title:'📊 資料・グラフ',sub:'グラフを読みとろう',pool:(typeof GRAPH!=='undefined'?GRAPH:[])},
 };
 const AOZORA=[
   {title:'ごん狐',author:'新美南吉',mins:'15分',e:'🦊',url:'https://www.aozora.gr.jp/cards/000121/files/628_14895.html'},
@@ -733,6 +735,11 @@ function closeScreen(){document.getElementById('screen').classList.remove('show'
 
 // ===== ことば・教養クイズ（漢字/都道府県/ニュース/単位/ことわざ 共通） =====
 let quizState=null;
+function graphHTML(item){
+  const vals=item.data.map(d=>d.v);const max=Math.max.apply(null,vals)||1;
+  const bars=item.data.map(d=>{const h=Math.round(d.v/max*120)+6;return `<div class="gbar-col"><div class="gbar-val">${d.v}</div><div class="gbar" style="height:${h}px"></div><div class="gbar-lbl">${d.l}</div></div>`;}).join('');
+  return `<div class="gtitle">${item.title}${item.unit?'（'+item.unit+'）':''}</div><div class="gchart">${bars}</div>`;
+}
 function openQuiz(id){
   const def=QUIZZES[id];const pool=(def&&def.pool)||[];
   if(!pool.length){closeScreen();return;}
@@ -752,7 +759,7 @@ function renderQuiz(){
     <div class="scr-head"><div class="x" onclick="closeScreen()">✕</div>
       <div><div class="ht">${def.title}</div><div class="hs">${def.sub}</div></div></div>
     <div class="scr-body">
-      <div class="ai-card"><div class="ai-label">❓ もんだい</div>
+      <div class="ai-card">${item.data?graphHTML(item):''}<div class="ai-label"${item.data?' style="margin-top:12px"':''}>❓ もんだい</div>
         <div style="font-size:17px;line-height:1.85;font-weight:700;color:#1c2c44">${rubyize(item.q)}</div></div>
       <div class="sec-sub" style="margin-top:14px">どれだと思う？ タップしてえらぼう（まちがえても大丈夫！）</div>
       <div id="quizChoices"></div>
@@ -823,6 +830,10 @@ function doExchange(){
   renderZukan();renderTop();
 }
 
+function renderBackup(){
+  const a=document.getElementById('backupArea');if(!a)return;
+  if(a.dataset.mode!=='restore'){a.value=store.get('kudan-state-v5')||JSON.stringify(state);}
+}
 // ===== きろく =====
 function renderRecord(){
   const keys=Object.keys(state.history);const live=Object.values(state.checks).filter(Boolean).length;
@@ -1037,6 +1048,7 @@ document.querySelectorAll('.tab').forEach(t=>{
     if(t.dataset.tab==='zukan')renderZukan();
     if(t.dataset.tab==='record')renderRecord();
     if(t.dataset.tab==='parent')renderParent();
+    if(t.dataset.tab==='plan')renderBackup();
   });
 });
 
@@ -1085,5 +1097,32 @@ load();
 renderQuests();
 renderTop();
 document.getElementById('exchangeBtn').addEventListener('click',doExchange);
+(function(){
+  var area=document.getElementById('backupArea'),copyBtn=document.getElementById('backupCopy'),restBtn=document.getElementById('restoreBtn'),msg=document.getElementById('backupMsg');
+  if(!area||!copyBtn||!restBtn)return;
+  copyBtn.addEventListener('click',function(){
+    area.dataset.mode='';area.value=store.get('kudan-state-v5')||JSON.stringify(state);restBtn.textContent='⏪ 貼り付けて復元';
+    area.removeAttribute('readonly');area.focus();area.select();try{area.setSelectionRange(0,999999);}catch(e){}
+    var ok=false;try{ok=document.execCommand('copy');}catch(e){}
+    if(!ok&&navigator.clipboard){try{navigator.clipboard.writeText(area.value);ok=true;}catch(e){}}
+    area.setAttribute('readonly','');if(msg)msg.textContent=ok?'📋 コピーしました！メモやメールに貼って保存してね。':'コピーできないときは、わくを長押しして「すべて選択→コピー」してね。';
+  });
+  restBtn.addEventListener('click',function(){
+    if(area.dataset.mode!=='restore'){
+      area.dataset.mode='restore';area.removeAttribute('readonly');area.value='';area.setAttribute('placeholder','ここにバックアップの文字を貼り付けてね');area.focus();
+      restBtn.textContent='✅ 貼り付けたら、これで復元';if(msg)msg.textContent='上のわくに、保存しておいたバックアップを貼り付けてから、もう一度このボタンを押してください。';
+    }else{
+      var txt=(area.value||'').trim();
+      try{
+        var obj=JSON.parse(txt);
+        if(!obj||typeof obj!=='object'||(!('history'in obj)&&!('checks'in obj)&&!('points'in obj)))throw new Error('bad');
+        if(confirm('今の記録を、貼り付けた内容で上書きします。よろしいですか？（元にはもどせません）')){
+          store.set('kudan-state-v5',JSON.stringify(obj));alert('復元しました。画面を読み込み直します。');location.reload();
+        }
+      }catch(e){if(msg)msg.textContent='⚠️ 文字が正しくないようです。バックアップ全体をもう一度貼り付けてください。';}
+    }
+  });
+  renderBackup();
+})();
 wasComplete=Object.values(state.checks).filter(Boolean).length===5;
 
