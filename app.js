@@ -28,10 +28,11 @@ const QUEST_DEFS={
   q_graph:{icon:'📊',name:'資料・グラフ',desc:'グラフを読みとろう',type:'activity'},
   kokugo:{icon:'📕',name:'国語（読む・書く）',desc:'読んで、考えて、書く',type:'activity'},
   shiryo:{icon:'📊',name:'資料・社会（読みとり）',desc:'資料を読んで考える',type:'activity'},
+  sansu:{icon:'🧮',name:'考える算数',desc:'きまり・割合・単位を考える',type:'activity'},
 };
 // 毎日固定（Duolingo・計算・音読）＋日替わり2枠＝合計5。1週間で全分野に触れる。
 const FIXED_QUESTS=['duo','kokugo','calc'];
-const ROTATING_QUESTS=['read','write','sci','shiryo','q_kanji','q_kenmin','q_news','q_units','q_kotowaza'];
+const ROTATING_QUESTS=['read','write','sci','shiryo','sansu','q_kanji','q_kenmin','q_news','q_units','q_kotowaza'];
 function dayIndex(){const d=new Date();return Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/86400000);}
 function todaysQuestIds(){
   const n=ROTATING_QUESTS.length,di=dayIndex();
@@ -611,62 +612,75 @@ function renderReading(item){
   document.getElementById('readDone').addEventListener('click',()=>finishActivity('read'));
 }
 
-// ===== 資料・社会（読みとり）セット =====
-let shiryoState=null;
-function pickShiryo(){
-  const pool=(typeof SHIRYO!=='undefined')?SHIRYO:[];if(!pool.length)return null;
-  state.recent=state.recent||{};if(!Array.isArray(state.recent.shiryo))state.recent.shiryo=[];
-  const rec=state.recent.shiryo;let cand=[];for(let i=0;i<pool.length;i++)if(rec.indexOf(i)<0)cand.push(i);
-  if(!cand.length)cand=pool.map((_,i)=>i);
+// ===== 選択式セット共通エンジン（資料・社会／考える算数） =====
+let csState=null;
+function recordStat(key,ok){state.stats=state.stats||{};state.stats[key]=state.stats[key]||{c:0,w:0};if(ok)state.stats[key].c++;else state.stats[key].w++;save();}
+function pickIdx(key,len){
+  state.recent=state.recent||{};if(!Array.isArray(state.recent[key]))state.recent[key]=[];
+  const rec=state.recent[key];let cand=[];for(let i=0;i<len;i++)if(rec.indexOf(i)<0)cand.push(i);
+  if(!cand.length){cand=[];for(let i=0;i<len;i++)cand.push(i);}
   const idx=cand[Math.floor(Math.random()*cand.length)];
-  rec.push(idx);const cap=Math.max(3,Math.floor(pool.length/2));while(rec.length>cap)rec.shift();
-  state.recent.shiryo=rec;save();return {item:pool[idx]};
+  rec.push(idx);const cap=Math.max(3,Math.floor(len/2));while(rec.length>cap)rec.shift();
+  state.recent[key]=rec;save();return idx;
 }
-function recordShiryo(ok){state.stats=state.stats||{};state.stats.shiryo=state.stats.shiryo||{c:0,w:0};if(ok)state.stats.shiryo.c++;else state.stats.shiryo.w++;save();}
-function shiryoGate(){
-  if(!shiryoState)return;
-  const need=shiryoState.item.qs.length+1,got=Object.keys(shiryoState.answered).length+(shiryoState.why?1:0);
-  const ok=got>=need,btn=document.getElementById('shiryoDone');
-  if(btn){btn.disabled=!ok;btn.textContent=ok?'読みとれた！クリア ⚾':'えらんでからクリア ⚾';}
+function csGate(){
+  if(!csState)return;
+  const need=csState.cfg.qs.length+1,got=Object.keys(csState.answered).length+(csState.fin?1:0);
+  const ok=got>=need,btn=document.getElementById('csDone');
+  if(btn){btn.disabled=!ok;btn.textContent=ok?csState.cfg.doneOK:csState.cfg.doneWait;}
 }
-function shiryoAnswerQ(qi,ci){
-  const box=document.querySelector('.sq-choices[data-qi="'+qi+'"]');if(!box||box.querySelector('.choice-btn.correct'))return;
-  const q=shiryoState.item.qs[qi];
+function csAnswerQ(qi,ci){
+  const box=document.querySelector('.cs-choices[data-qi="'+qi+'"]');if(!box||box.querySelector('.choice-btn.correct'))return;
+  const q=csState.cfg.qs[qi];
   box.querySelectorAll('.choice-btn').forEach((b,i)=>{const c=q.choices[i];b.classList.add(c.ok?'correct':'wrong');if(i===ci)b.classList.add('chosen-outline');if(c.ok&&!b.querySelector('.choice-comment')){const cm=document.createElement('div');cm.className='choice-comment';cm.textContent='✓ せいかい！';b.appendChild(cm);}b.disabled=true;});
-  recordShiryo(!!q.choices[ci].ok);
-  document.querySelector('.sq-reply[data-qi="'+qi+'"]').innerHTML='<div class="sensei-reply" style="margin-top:8px"><div class="sr-body">'+(q.choices[ci].ok?'🎉 ':'🔍 ')+rubyize(q.a)+'</div></div>';
-  shiryoState.answered[qi]=true;shiryoGate();
+  recordStat(csState.cfg.statKey,!!q.choices[ci].ok);
+  document.querySelector('.cs-reply[data-qi="'+qi+'"]').innerHTML='<div class="sensei-reply" style="margin-top:8px"><div class="sr-body">'+(q.choices[ci].ok?'🎉 ':'🔍 ')+rubyize(q.a)+'</div></div>';
+  csState.answered[qi]=true;csGate();
 }
-function shiryoAnswerWhy(ci){
-  const box=document.getElementById('swChoices');if(!box||box.querySelector('.choice-btn.correct'))return;
-  const wy=shiryoState.item.why;
-  box.querySelectorAll('.choice-btn').forEach((b,i)=>{const c=wy.choices[i];b.classList.add(c.ok?'correct':'wrong');if(i===ci)b.classList.add('chosen-outline');if(c.ok&&!b.querySelector('.choice-comment')){const cm=document.createElement('div');cm.className='choice-comment';cm.textContent='✓ なるほど！';b.appendChild(cm);}b.disabled=true;});
-  recordShiryo(!!wy.choices[ci].ok);
-  document.getElementById('swReply').innerHTML='<div class="sensei-reply"><div class="sr-head">💡 理由の言い方（見本）</div><div class="sr-body">'+rubyize(wy.a)+'</div></div>';
-  shiryoState.why=true;shiryoGate();
+function csAnswerFinal(ci){
+  const box=document.getElementById('csFinChoices');if(!box||box.querySelector('.choice-btn.correct'))return;
+  const fin=csState.cfg.fin;
+  box.querySelectorAll('.choice-btn').forEach((b,i)=>{const c=fin.choices[i];b.classList.add(c.ok?'correct':'wrong');if(i===ci)b.classList.add('chosen-outline');if(c.ok&&!b.querySelector('.choice-comment')){const cm=document.createElement('div');cm.className='choice-comment';cm.textContent='✓ なるほど！';b.appendChild(cm);}b.disabled=true;});
+  recordStat(csState.cfg.statKey,!!fin.choices[ci].ok);
+  document.getElementById('csFinReply').innerHTML='<div class="sensei-reply"><div class="sr-head">'+fin.head+'</div><div class="sr-body">'+rubyize(fin.a)+'</div></div>';
+  csState.fin=true;csGate();
 }
-function renderShiryo(picked){
-  if(!picked){closeScreen();return;}
-  const item=picked.item;shiryoState={item:item,answered:{},why:false};
-  const tbl='<table class="sr-table"><tbody>'+item.rows.map(r=>'<tr><th>'+rubyize(r.l)+'</th><td>'+rubyize(r.v)+'</td></tr>').join('')+'</tbody></table>';
-  const qsHtml=item.qs.map((q,qi)=>'<div class="q-item" style="margin-top:14px"><div class="qq">📊（'+(qi+1)+'）'+rubyize(q.q)+'</div><div class="sq-choices" data-qi="'+qi+'"></div><div class="sq-reply" data-qi="'+qi+'"></div></div>').join('');
-  document.getElementById('screenInner').innerHTML=`
-   <div class="screen show" style="position:static;display:flex;">
-    <div class="scr-head"><div class="x" onclick="closeScreen()">✕</div><div><div class="ht">📊 資料・社会（読みとり）</div><div class="hs">${item.title}</div></div></div>
-    <div class="scr-body">
-      <div class="ai-card"><div class="ai-label">📋 資料を読もう</div><div style="font-size:13px;color:#33414f;margin-bottom:8px">${rubyize(item.intro||'')}</div>${tbl}</div>
-      ${qsHtml}
-      <div class="q-item" style="margin-top:18px">
-        <div class="qq">🤔 ${rubyize(item.why.q)}</div>
-        <div class="q-note">「いちばん近い考え」をえらぼう。えらんだら、理由の言い方の見本が出るよ。</div>
-        <div id="swChoices"></div><div id="swReply"></div>
-      </div>
-    </div>
-    <div class="scr-foot"><button class="btn btn-green" id="shiryoDone" disabled>えらんでからクリア ⚾</button></div>
-   </div>`;
-  item.qs.forEach((q,qi)=>{const box=document.querySelector('.sq-choices[data-qi="'+qi+'"]');q.choices.forEach((c,ci)=>{const b=document.createElement('button');b.className='choice-btn';b.innerHTML='<div class="choice-row"><span class="choice-mark">'+'ABC'[ci]+'</span><span class="choice-text">'+rubyize(c.t)+'</span></div>';b.addEventListener('click',()=>shiryoAnswerQ(qi,ci));box.appendChild(b);});});
-  const sw=document.getElementById('swChoices');item.why.choices.forEach((c,ci)=>{const b=document.createElement('button');b.className='choice-btn';b.innerHTML='<div class="choice-row"><span class="choice-mark">'+'ABC'[ci]+'</span><span class="choice-text">'+rubyize(c.t)+'</span></div>';b.addEventListener('click',()=>shiryoAnswerWhy(ci));sw.appendChild(b);});
-  document.getElementById('shiryoDone').addEventListener('click',()=>{finishActivity('shiryo');});
+function renderChoiceSet(cfg){
+  csState={cfg:cfg,answered:{},fin:false};
+  const qsHtml=cfg.qs.map((q,qi)=>'<div class="q-item" style="margin-top:14px"><div class="qq">'+cfg.qIcon+'（'+(qi+1)+'）'+rubyize(q.q)+'</div><div class="cs-choices" data-qi="'+qi+'"></div><div class="cs-reply" data-qi="'+qi+'"></div></div>').join('');
+  document.getElementById('screenInner').innerHTML=
+   '<div class="screen show" style="position:static;display:flex;">'+
+    '<div class="scr-head"><div class="x" onclick="closeScreen()">✕</div><div><div class="ht">'+cfg.label+'</div><div class="hs">'+cfg.hs+'</div></div></div>'+
+    '<div class="scr-body">'+
+      '<div class="ai-card"><div class="ai-label">'+cfg.topLabel+'</div>'+cfg.topHTML+'</div>'+
+      qsHtml+
+      '<div class="q-item" style="margin-top:18px"><div class="qq">🤔 '+rubyize(cfg.fin.q)+'</div><div class="q-note">'+cfg.fin.note+'</div><div id="csFinChoices"></div><div id="csFinReply"></div></div>'+
+    '</div>'+
+    '<div class="scr-foot"><button class="btn btn-green" id="csDone" disabled>'+cfg.doneWait+'</button></div>'+
+   '</div>';
+  cfg.qs.forEach((q,qi)=>{const box=document.querySelector('.cs-choices[data-qi="'+qi+'"]');q.choices.forEach((c,ci)=>{const b=document.createElement('button');b.className='choice-btn';b.innerHTML='<div class="choice-row"><span class="choice-mark">'+'ABC'[ci]+'</span><span class="choice-text">'+rubyize(c.t)+'</span></div>';b.addEventListener('click',()=>csAnswerQ(qi,ci));box.appendChild(b);});});
+  const fb=document.getElementById('csFinChoices');cfg.fin.choices.forEach((c,ci)=>{const b=document.createElement('button');b.className='choice-btn';b.innerHTML='<div class="choice-row"><span class="choice-mark">'+'ABC'[ci]+'</span><span class="choice-text">'+rubyize(c.t)+'</span></div>';b.addEventListener('click',()=>csAnswerFinal(ci));fb.appendChild(b);});
+  document.getElementById('csDone').addEventListener('click',()=>{finishActivity(cfg.id);});
+}
+function srTable(rows){return '<table class="sr-table"><tbody>'+rows.map(r=>'<tr><th>'+rubyize(r.l)+'</th><td>'+rubyize(r.v)+'</td></tr>').join('')+'</tbody></table>';}
+function renderShiryo(){
+  const pool=(typeof SHIRYO!=='undefined')?SHIRYO:[];if(!pool.length){closeScreen();return;}
+  const item=pool[pickIdx('shiryo',pool.length)];
+  renderChoiceSet({id:'shiryo',statKey:'shiryo',label:'📊 資料・社会（読みとり）',hs:item.title,topLabel:'📋 資料を読もう',
+    topHTML:'<div style="font-size:13px;color:#33414f;margin-bottom:8px">'+rubyize(item.intro||'')+'</div>'+srTable(item.rows),
+    qIcon:'📊',qs:item.qs,
+    fin:{q:item.why.q,note:'「いちばん近い考え」をえらぼう。えらぶと、理由の言い方の見本が出るよ。',choices:item.why.choices,a:item.why.a,head:'💡 理由の言い方（見本）'},
+    doneWait:'えらんでからクリア ⚾',doneOK:'読みとれた！クリア ⚾'});
+}
+function renderSansu(){
+  const pool=(typeof SANSU!=='undefined')?SANSU:[];if(!pool.length){closeScreen();return;}
+  const item=pool[pickIdx('sansu',pool.length)];
+  let top='<div style="font-size:13.5px;color:#33414f;line-height:1.85">'+rubyize(item.intro||'')+'</div>';
+  if(item.rows&&item.rows.length)top+='<div style="margin-top:8px">'+srTable(item.rows)+'</div>';
+  renderChoiceSet({id:'sansu',statKey:'sansu',label:'🧮 考える算数',hs:item.title,topLabel:'🧩 もんだい',
+    topHTML:top,qIcon:'🧮',qs:item.qs,
+    fin:{q:item.how.q,note:'「考え方」としていちばん正しいものをえらぼう。えらぶと、式や手順の見本が出るよ。',choices:item.how.choices,a:item.how.a,head:'💡 考え方（見本）'},
+    doneWait:'えらんでからクリア ⚾',doneOK:'考えぬいた！クリア ⚾'});
 }
 // ===== 国語（読む・書く）セット =====
 let kokuState=null;
@@ -866,7 +880,8 @@ function openActivity(id){
   else if(id==='write'){renderWriting(pickFromPool('write'));}
   else if(id==='sci'){renderScience(pickFromPool('sci'));}
   else if(id==='kokugo'){renderKokugo(pickKokugo());}
-  else if(id==='shiryo'){renderShiryo(pickShiryo());}
+  else if(id==='shiryo'){renderShiryo();}
+  else if(id==='sansu'){renderSansu();}
   else if(QUIZZES[id]){openQuiz(id);}
 }
 function finishActivity(id){closeScreen();completeQuest(id);}
@@ -1037,6 +1052,7 @@ function renderWeekly(){
   const qz=state.stats.quiz||{};Object.keys(qz).forEach(k=>consider((QL[k]||k)+'クイズ',qz[k].c,qz[k].w));
   if(state.stats.kokugo)consider('国語の読み取り',state.stats.kokugo.c,state.stats.kokugo.w);
   if(state.stats.shiryo)consider('資料の読みとり',state.stats.shiryo.c,state.stats.shiryo.w);
+  if(state.stats.sansu)consider('考える算数',state.stats.sansu.c,state.stats.sansu.w);
   let comment;
   if(daysActive===0)comment='今週はまだ取り組みがありません。まずは1つのクエストから、いっしょに始めてみましょう。';
   else if(daysFull>=5)comment='今週はすばらしいペース！毎日の習慣がしっかり身についています。';
