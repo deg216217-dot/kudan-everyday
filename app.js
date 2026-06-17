@@ -32,12 +32,11 @@ const QUEST_DEFS={
   rika:{icon:'🔬',name:'理科の観察・実験',desc:'観察して「なぜ？」を考える',type:'activity'},
 };
 // 毎日固定（Duolingo・計算・音読）＋日替わり2枠＝合計5。1週間で全分野に触れる。
-const FIXED_QUESTS=['duo','kokugo','calc'];
-const ROTATING_QUESTS=['read','write','sci','shiryo','sansu','rika','q_kanji','q_kenmin','q_news','q_units','q_kotowaza'];
+const FIXED_QUESTS=['kokugo','shiryo','sansu','rika','duo'];
+const ROTATING_QUESTS=[];
 function dayIndex(){const d=new Date();return Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/86400000);}
 function todaysQuestIds(){
-  const n=ROTATING_QUESTS.length,di=dayIndex();
-  return FIXED_QUESTS.concat([ROTATING_QUESTS[((di*2)%n+n)%n],ROTATING_QUESTS[((di*2+1)%n+n)%n]]);
+  return FIXED_QUESTS.slice();
 }
 const QUIZZES={
   q_kanji:{title:'🈶 漢字クイズ',sub:'漢字の読み・意味',pool:(typeof KANJI!=='undefined'?KANJI:[])},
