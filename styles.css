@@ -332,3 +332,16 @@
 .badge-h{font-weight:800;font-size:13px;color:var(--gold-deep);margin-bottom:8px;}
 .badge-row{display:flex;flex-wrap:wrap;}
 .badge-chip{display:inline-block;background:#fff4dc;border:1.5px solid var(--gold-btn2);color:#8a5a00;font-weight:800;font-size:12px;padding:5px 11px;border-radius:99px;margin:0 7px 7px 0;}
+
+/* 文字：大きめ設定 */
+body.big-ui .qname{font-size:18px;}
+body.big-ui .qdesc{font-size:13.5px;}
+body.big-ui .ai-story{font-size:21px;line-height:2.4;}
+body.big-ui .calc-q{font-size:44px;}
+body.big-ui .calc-input{font-size:38px;}
+body.big-ui .choice-text{font-size:17px;}
+body.big-ui .q-item .qq{font-size:16px;}
+body.big-ui .answer-area{font-size:17px;}
+body.big-ui .sensei-reply .sr-body{font-size:16px;}
+body.big-ui .gacha-result{font-size:52px;}
+body.big-ui .sec-sub{font-size:13.5px;}

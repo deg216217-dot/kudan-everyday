@@ -110,7 +110,7 @@ const store={mem:{},
 };
 
 let state={today:todayKey(),checks:{},history:{},calcTier:1,calcStats:{correct:0,wrong:0},sakubunDone:0,log:[],
-  money:0,points:0,totalEarned:0,badges:[],weakQuiz:{},exchanges:[],cards:{},gachaLog:{},seen:{read:[],write:[],sci:[]},recent:{read:[],write:[],sci:[]},stats:{calc:{},sci:{},read:{},write:{},quiz:{}},weak:{calc:[],sci:[]}};
+  money:0,points:0,totalEarned:0,badges:[],weakQuiz:{},settings:{sound:true,bigText:false},exchanges:[],cards:{},gachaLog:{},seen:{read:[],write:[],sci:[]},recent:{read:[],write:[],sci:[]},stats:{calc:{},sci:{},read:{},write:{},quiz:{}},weak:{calc:[],sci:[]}};
 
 function load(){
   const r=store.get('kudan-state-v5');
@@ -119,6 +119,7 @@ function load(){
     state.calcStats=s.calcStats||{correct:0,wrong:0};state.sakubunDone=s.sakubunDone||0;state.log=s.log||[];
     state.money=s.money||0;state.points=s.points||0;state.exchanges=Array.isArray(s.exchanges)?s.exchanges:[];state.cards=s.cards||{};state.gachaLog=s.gachaLog||{};
     state.totalEarned=s.totalEarned||0;state.badges=Array.isArray(s.badges)?s.badges:[];state.weakQuiz=(s.weakQuiz&&typeof s.weakQuiz==='object')?s.weakQuiz:{};
+    state.settings=(s.settings&&typeof s.settings==='object')?{sound:s.settings.sound!==false,bigText:!!s.settings.bigText}:{sound:true,bigText:false};
     state.seen=s.seen||{read:[],write:[],sci:[]};
     if(!state.seen.read)state.seen.read=[];if(!state.seen.write)state.seen.write=[];if(!state.seen.sci)state.seen.sci=[];
     state.stats=s.stats||{calc:{},sci:{},read:{},write:{}};
@@ -308,26 +309,29 @@ function checkComplete(delay){
   if(done===5&&!wasComplete){wasComplete=true;if(!state.gachaLog[state.today]){setTimeout(openGacha,delay?450:150);}}
   if(done<5)wasComplete=false;
 }
-function calcStreak(){
-  let streak=0;const d=new Date();
+function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function dayFull(k){const h=state.history[k];return k===state.today?(Object.values(state.checks).filter(Boolean).length===5):!!(h&&h.count===5);}
+function calcStreak(){ // 1日休みはセーフ、2日続けて休むとリセット（やさしい連勝）
+  let streak=0,miss=0;const d=new Date();
   for(let i=0;i<400;i++){
-    const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    const h=state.history[k];
-    const full=k===state.today?(Object.values(state.checks).filter(Boolean).length===5):(h&&h.count===5);
-    if(full)streak++;else if(k===state.today){}else break;
+    const k=ymd(d);
+    if(dayFull(k)){streak++;miss=0;}
+    else if(k===state.today){/* 今日まだ未達成は数えない・切らない */}
+    else{miss++;if(miss>=2)break;}
     d.setDate(d.getDate()-1);
-  }return streak;
+  }
+  return streak;
 }
-function bestStreak(){
-  const allFull={};Object.keys(state.history).forEach(k=>{if(state.history[k].count===5)allFull[k]=true;});
-  if(Object.values(state.checks).filter(Boolean).length===5)allFull[state.today]=true;
-  const sorted=Object.keys(allFull).sort();let best=0,cur=0,prev=null;
-  for(const k of sorted){
-    if(prev){const pd=new Date(prev);pd.setDate(pd.getDate()+1);
-      const nk=`${pd.getFullYear()}-${String(pd.getMonth()+1).padStart(2,'0')}-${String(pd.getDate()).padStart(2,'0')}`;
-      cur=nk===k?cur+1:1;}else cur=1;
-    best=Math.max(best,cur);prev=k;
-  }return best;
+function bestStreak(){ // calcStreakと同じ「1日休みセーフ」で最高連勝を計算
+  const full={};Object.keys(state.history).forEach(k=>{if(state.history[k].count===5)full[k]=true;});
+  if(Object.values(state.checks).filter(Boolean).length===5)full[state.today]=true;
+  const days=Object.keys(full).sort();if(!days.length)return 0;
+  let best=0,cur=0,miss=0;const end=new Date(state.today);
+  for(let d=new Date(days[0]);d<=end;d.setDate(d.getDate()+1)){
+    if(full[ymd(d)]){cur++;miss=0;if(cur>best)best=cur;}
+    else{miss++;if(miss>=2){cur=0;miss=0;}}
+  }
+  return best;
 }
 
 // ============ GACHA ============
@@ -860,6 +864,12 @@ function renderBackup(){
   const a=document.getElementById('backupArea');if(!a)return;
   if(a.dataset.mode!=='restore'){a.value=store.get('kudan-state-v5')||JSON.stringify(state);}
 }
+function applyTextSize(){document.body.classList.toggle('big-ui',!!(state.settings&&state.settings.bigText));}
+function renderSettings(){
+  const sb=document.getElementById('setSound'),tb=document.getElementById('setText');
+  if(sb)sb.textContent=(state.settings&&state.settings.sound!==false)?'🔊 音：オン':'🔇 音：オフ';
+  if(tb)tb.textContent=(state.settings&&state.settings.bigText)?'🔤 文字：大きめ':'🔤 文字：標準';
+}
 // ===== きろく =====
 function renderRecord(){
   const keys=Object.keys(state.history);const live=Object.values(state.checks).filter(Boolean).length;
@@ -1082,12 +1092,13 @@ document.querySelectorAll('.tab').forEach(t=>{
     if(t.dataset.tab==='zukan')renderZukan();
     if(t.dataset.tab==='record')renderRecord();
     if(t.dataset.tab==='parent')renderParent();
-    if(t.dataset.tab==='plan')renderBackup();
+    if(t.dataset.tab==='plan'){renderBackup();renderSettings();}
   });
 });
 
 let actx=null;
 function beep(freq,dur,type='sine',vol=.15){
+  if(state.settings&&state.settings.sound===false)return;
   try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
     const o=actx.createOscillator(),g=actx.createGain();o.type=type;o.frequency.value=freq;
     o.connect(g);g.connect(actx.destination);g.gain.setValueAtTime(vol,actx.currentTime);
@@ -1119,7 +1130,7 @@ document.getElementById('resetBtn').addEventListener('click',()=>{
 });
 document.getElementById('resetAllBtn').addEventListener('click',()=>{
   if(confirm('すべての記録（連勝・カレンダー・先生メモ・計算レベル・ポイント・交換のきろく）を消します。元にもどせません。よろしいですか？')){
-    state={today:todayKey(),checks:{},history:{},calcTier:1,calcStats:{correct:0,wrong:0},sakubunDone:0,log:[],money:0,points:0,totalEarned:0,badges:[],weakQuiz:{},exchanges:[],cards:{},gachaLog:{},seen:{read:[],write:[],sci:[]},recent:{read:[],write:[],sci:[]},stats:{calc:{},sci:{},read:{},write:{},quiz:{}},weak:{calc:[],sci:[]}};
+    state={today:todayKey(),checks:{},history:{},calcTier:1,calcStats:{correct:0,wrong:0},sakubunDone:0,log:[],money:0,points:0,totalEarned:0,badges:[],weakQuiz:{},settings:{sound:true,bigText:false},exchanges:[],cards:{},gachaLog:{},seen:{read:[],write:[],sci:[]},recent:{read:[],write:[],sci:[]},stats:{calc:{},sci:{},read:{},write:{},quiz:{}},weak:{calc:[],sci:[]}};
     store.del('kudan-state-v5');renderQuests();renderTop();alert('初期化しました');
   }
 });
@@ -1158,5 +1169,11 @@ document.getElementById('exchangeBtn').addEventListener('click',doExchange);
   });
   renderBackup();
 })();
+(function(){
+  var sb=document.getElementById('setSound'),tb=document.getElementById('setText');
+  if(sb)sb.addEventListener('click',function(){state.settings=state.settings||{sound:true,bigText:false};state.settings.sound=!(state.settings.sound!==false);save();renderSettings();if(state.settings.sound)beep(880,.08,'triangle');});
+  if(tb)tb.addEventListener('click',function(){state.settings=state.settings||{sound:true,bigText:false};state.settings.bigText=!state.settings.bigText;save();applyTextSize();renderSettings();});
+})();
+applyTextSize();renderSettings();
 wasComplete=Object.values(state.checks).filter(Boolean).length===5;
 
