@@ -43,6 +43,13 @@ const QUIZZES={
   q_kotowaza:{title:'💬 ことわざ・慣用句',sub:'ことばの意味',pool:(typeof KOTOWAZA!=='undefined'?KOTOWAZA:[])},
   q_graph:{title:'📊 資料・グラフ',sub:'グラフを読みとろう',pool:(typeof GRAPH!=='undefined'?GRAPH:[])},
 };
+const MILESTONES=[
+  {id:'m100',pt:100,e:'🌱',t:'はじめの一歩'},
+  {id:'m300',pt:300,e:'⭐',t:'コツコツ名人'},
+  {id:'m700',pt:700,e:'🔥',t:'がんばり屋'},
+  {id:'m1500',pt:1500,e:'🎓',t:'もの知りはかせ'},
+  {id:'m3000',pt:3000,e:'👑',t:'九段マスター'},
+];
 const AOZORA=[
   {title:'ごん狐',author:'新美南吉',mins:'15分',e:'🦊',url:'https://www.aozora.gr.jp/cards/000121/files/628_14895.html'},
   {title:'手袋を買いに',author:'新美南吉',mins:'10分',e:'🧤',url:'https://www.aozora.gr.jp/cards/000121/files/637_13341.html'},
@@ -103,7 +110,7 @@ const store={mem:{},
 };
 
 let state={today:todayKey(),checks:{},history:{},calcTier:1,calcStats:{correct:0,wrong:0},sakubunDone:0,log:[],
-  money:0,points:0,exchanges:[],cards:{},gachaLog:{},seen:{read:[],write:[],sci:[]},recent:{read:[],write:[],sci:[]},stats:{calc:{},sci:{},read:{},write:{}},weak:{calc:[],sci:[]}};
+  money:0,points:0,totalEarned:0,badges:[],weakQuiz:{},exchanges:[],cards:{},gachaLog:{},seen:{read:[],write:[],sci:[]},recent:{read:[],write:[],sci:[]},stats:{calc:{},sci:{},read:{},write:{},quiz:{}},weak:{calc:[],sci:[]}};
 
 function load(){
   const r=store.get('kudan-state-v5');
@@ -111,11 +118,12 @@ function load(){
     state.history=s.history||{};state.calcTier=s.calcTier||1;
     state.calcStats=s.calcStats||{correct:0,wrong:0};state.sakubunDone=s.sakubunDone||0;state.log=s.log||[];
     state.money=s.money||0;state.points=s.points||0;state.exchanges=Array.isArray(s.exchanges)?s.exchanges:[];state.cards=s.cards||{};state.gachaLog=s.gachaLog||{};
+    state.totalEarned=s.totalEarned||0;state.badges=Array.isArray(s.badges)?s.badges:[];state.weakQuiz=(s.weakQuiz&&typeof s.weakQuiz==='object')?s.weakQuiz:{};
     state.seen=s.seen||{read:[],write:[],sci:[]};
     if(!state.seen.read)state.seen.read=[];if(!state.seen.write)state.seen.write=[];if(!state.seen.sci)state.seen.sci=[];
     state.stats=s.stats||{calc:{},sci:{},read:{},write:{}};
     if(!state.stats.calc)state.stats.calc={};if(!state.stats.sci)state.stats.sci={};
-    if(!state.stats.read)state.stats.read={};if(!state.stats.write)state.stats.write={};
+    if(!state.stats.read)state.stats.read={};if(!state.stats.write)state.stats.write={};if(!state.stats.quiz)state.stats.quiz={};
     state.recent=s.recent||{read:[],write:[],sci:[]};
     if(!state.recent.read)state.recent.read=[];if(!state.recent.write)state.recent.write=[];if(!state.recent.sci)state.recent.sci=[];
     state.weak=s.weak||{calc:[],sci:[]};
@@ -348,7 +356,9 @@ function openCapsule(){
 }
 function revealGacha(){
   const points=gachaPending.points;
-  state.points+=points;
+  state.points+=points;state.totalEarned=(state.totalEarned||0)+points;
+  state.badges=state.badges||[];var newBadge=null;
+  MILESTONES.forEach(function(m){if(state.totalEarned>=m.pt&&state.badges.indexOf(m.id)<0){state.badges.push(m.id);newBadge=m;}});
   state.gachaLog[state.today]={points,ts:Date.now()};
   save();
   beep(523,.15,'square');setTimeout(()=>beep(784,.15,'square'),130);setTimeout(()=>beep(1047,.25,'square'),260);
@@ -359,6 +369,7 @@ function revealGacha(){
       <div class="cap-open">🪙</div>
       <div class="gacha-result">${points} ポイント！${big?' 🎉':''}</div>
       <div class="gacha-total">いまのポイント → <b>${state.points} pt</b></div>
+      ${newBadge?'<div class="gacha-sub" style="margin-top:10px;color:#bb750a;font-weight:800">'+newBadge.e+' 新しい称号「'+newBadge.t+'」ゲット！</div>':''}
       ${canEx?'<div class="gacha-sub" style="margin-top:12px;color:#1e7a44">🎁 1000pt貯まった！「ポイント」タブで1,000円と交換できるよ</div>':''}
       <button class="gacha-btn" id="gachaClose">やったー！とじる</button>
     </div>`;
@@ -745,12 +756,13 @@ function openQuiz(id){
   if(!pool.length){closeScreen();return;}
   const rk='quiz_'+id;state.recent=state.recent||{};if(!Array.isArray(state.recent[rk]))state.recent[rk]=[];
   const recent=state.recent[rk];
-  let cand=[];for(let i=0;i<pool.length;i++)if(recent.indexOf(i)<0)cand.push(i);
-  if(!cand.length)cand=pool.map((_,i)=>i);
-  const idx=cand[Math.floor(Math.random()*cand.length)];
+  state.weakQuiz=state.weakQuiz||{};const weak=(state.weakQuiz[id]||[]).filter(i=>i<pool.length);
+  let idx;
+  if(weak.length&&Math.random()<0.45){idx=weak[Math.floor(Math.random()*weak.length)];}
+  else{let cand=[];for(let i=0;i<pool.length;i++)if(recent.indexOf(i)<0)cand.push(i);if(!cand.length)cand=pool.map((_,i)=>i);idx=cand[Math.floor(Math.random()*cand.length)];}
   recent.push(idx);const cap=Math.max(4,Math.floor(pool.length/2));while(recent.length>cap)recent.shift();
   state.recent[rk]=recent;save();
-  quizState={id,def,item:pool[idx]};renderQuiz();
+  quizState={id,def,item:pool[idx],idx:idx};renderQuiz();
 }
 function renderQuiz(){
   const def=quizState.def,item=quizState.item;
@@ -794,7 +806,11 @@ function revealQuiz(sel){
 function recordQuiz(id,ok){
   state.stats=state.stats||{};state.stats.quiz=state.stats.quiz||{};
   const o=state.stats.quiz[id]||(state.stats.quiz[id]={c:0,w:0});
-  if(ok)o.c++;else o.w++;save();
+  if(ok)o.c++;else o.w++;
+  state.weakQuiz=state.weakQuiz||{};const w=state.weakQuiz[id]||(state.weakQuiz[id]=[]);
+  const qi=(quizState&&typeof quizState.idx==='number')?quizState.idx:-1;
+  if(qi>=0){if(ok){const p=w.indexOf(qi);if(p>=0)w.splice(p,1);}else if(w.indexOf(qi)<0)w.push(qi);}
+  save();
 }
 
 // ===== ポイント =====
@@ -810,6 +826,16 @@ function renderZukan(){
   }else{
     document.getElementById('ptHint').innerHTML=`あと <b>${1000-prog}</b> pt で1,000円と交換できるよ`;
     exBtn.disabled=true;
+  }
+  const bb=document.getElementById('badgeBox');
+  if(bb){
+    const tot=state.totalEarned||0,earned=state.badges||[];
+    const got=MILESTONES.filter(m=>earned.indexOf(m.id)>=0);
+    const next=MILESTONES.find(m=>tot<m.pt);
+    let bh='<div class="badge-h">🏅 あつめた称号（合計 '+tot+'pt）</div>';
+    bh+=got.length?('<div class="badge-row">'+got.map(m=>'<span class="badge-chip">'+m.e+' '+m.t+'</span>').join('')+'</div>'):'<div class="sec-sub">ガチャをまわすと、合計ポイントに応じて称号がもらえるよ。</div>';
+    if(next)bh+='<div class="sec-sub" style="margin-top:6px">つぎの称号：'+next.e+' '+next.t+'（あと '+(next.pt-tot)+'pt）</div>';
+    bb.innerHTML=bh;
   }
   renderExchangeLog();
 }
@@ -896,6 +922,14 @@ function renderInsights(){
       html+=`<div class="ins-count"><div class="ic-th">${TH[t].e} ${TH[t].n}</div><div class="ic-nums"><span>📖 ${r}</span><span>✍️ ${w}</span></div></div>`;});
     html+=`</div>`;
   }
+  html+=`</div>`;
+
+  // --- ことば・教養クイズ：正答率 ---
+  const qz=state.stats.quiz||{};const QL={q_kanji:'🈶 漢字',q_kenmin:'🗾 都道府県',q_news:'📰 ニュースの言葉',q_units:'📏 たんい',q_kotowaza:'💬 ことわざ・慣用句',q_graph:'📊 資料・グラフ'};
+  const qzKeys=Object.keys(QL).filter(k=>qz[k]&&(qz[k].c+qz[k].w)>0);
+  html+=`<div class="ins-card"><div class="ins-h">🧠 ことば・教養クイズ（正答率）</div>`;
+  if(!qzKeys.length){html+=`<div class="ins-empty">まだクイズのきろくがありません。日替わりで出るクイズをやってみよう！</div>`;}
+  else{qzKeys.forEach(k=>{const o=qz[k];const tot=o.c+o.w;const p=pct(o.c,o.w);html+=`<div class="ins-row"><div class="ins-label">${QL[k]}</div><div class="ins-track"><div class="ins-fill" style="width:${p}%;background:${barColor(p)}"></div></div><div class="ins-val">${p}%<span class="ins-n">(${tot}問)</span></div></div>`;});}
   html+=`</div>`;
 
   // --- 自動コメント ---
@@ -1085,7 +1119,7 @@ document.getElementById('resetBtn').addEventListener('click',()=>{
 });
 document.getElementById('resetAllBtn').addEventListener('click',()=>{
   if(confirm('すべての記録（連勝・カレンダー・先生メモ・計算レベル・ポイント・交換のきろく）を消します。元にもどせません。よろしいですか？')){
-    state={today:todayKey(),checks:{},history:{},calcTier:1,calcStats:{correct:0,wrong:0},sakubunDone:0,log:[],money:0,points:0,exchanges:[],cards:{},gachaLog:{},seen:{read:[],write:[],sci:[]},recent:{read:[],write:[],sci:[]},stats:{calc:{},sci:{},read:{},write:{}},weak:{calc:[],sci:[]}};
+    state={today:todayKey(),checks:{},history:{},calcTier:1,calcStats:{correct:0,wrong:0},sakubunDone:0,log:[],money:0,points:0,totalEarned:0,badges:[],weakQuiz:{},exchanges:[],cards:{},gachaLog:{},seen:{read:[],write:[],sci:[]},recent:{read:[],write:[],sci:[]},stats:{calc:{},sci:{},read:{},write:{},quiz:{}},weak:{calc:[],sci:[]}};
     store.del('kudan-state-v5');renderQuests();renderTop();alert('初期化しました');
   }
 });
