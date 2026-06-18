@@ -113,14 +113,14 @@ const store={mem:{},
 };
 
 let state={today:todayKey(),checks:{},history:{},calcTier:1,calcStats:{correct:0,wrong:0},sakubunDone:0,log:[],
-  money:0,points:0,totalEarned:0,badges:[],weakQuiz:{},settings:{sound:true,bigText:false},exchanges:[],cards:{},gachaLog:{},review:{},seen:{read:[],write:[],sci:[]},recent:{read:[],write:[],sci:[]},stats:{calc:{},sci:{},read:{},write:{},quiz:{}},weak:{calc:[],sci:[]}};
+  money:0,points:0,totalEarned:0,badges:[],weakQuiz:{},settings:{sound:true,bigText:false},exchanges:[],cards:{},gachaLog:{},review:{},attempts:[],seen:{read:[],write:[],sci:[]},recent:{read:[],write:[],sci:[]},stats:{calc:{},sci:{},read:{},write:{},quiz:{}},weak:{calc:[],sci:[]}};
 
 function load(){
   const r=store.get('kudan-state-v5');
   if(r){try{const s=JSON.parse(r);
     state.history=s.history||{};state.calcTier=s.calcTier||1;
     state.calcStats=s.calcStats||{correct:0,wrong:0};state.sakubunDone=s.sakubunDone||0;state.log=s.log||[];
-    state.money=s.money||0;state.points=s.points||0;state.exchanges=Array.isArray(s.exchanges)?s.exchanges:[];state.cards=s.cards||{};state.gachaLog=s.gachaLog||{};state.review=(s.review&&typeof s.review==='object')?s.review:{};
+    state.money=s.money||0;state.points=s.points||0;state.exchanges=Array.isArray(s.exchanges)?s.exchanges:[];state.cards=s.cards||{};state.gachaLog=s.gachaLog||{};state.review=(s.review&&typeof s.review==='object')?s.review:{};state.attempts=Array.isArray(s.attempts)?s.attempts:[];
     state.totalEarned=s.totalEarned||0;state.badges=Array.isArray(s.badges)?s.badges:[];state.weakQuiz=(s.weakQuiz&&typeof s.weakQuiz==='object')?s.weakQuiz:{};
     state.settings=(s.settings&&typeof s.settings==='object')?{sound:s.settings.sound!==false,bigText:!!s.settings.bigText}:{sound:true,bigText:false};
     state.seen=s.seen||{read:[],write:[],sci:[]};
@@ -140,6 +140,12 @@ function save(){
   const done=Object.values(state.checks).filter(Boolean).length;
   state.history[state.today]={count:done,quests:{...state.checks}};
   store.set('kudan-state-v5',JSON.stringify(state));
+}
+function logAttempt(subject,title,c,n){
+  if(!n)return;state.attempts=state.attempts||[];
+  state.attempts.push({d:state.today,s:subject,t:title,c:c,n:n});
+  if(state.attempts.length>400)state.attempts=state.attempts.slice(-400);
+  save();
 }
 function addLog(tag,question,answer,extra){
   state.log.unshift({date:state.today,ts:Date.now(),tag,question,answer,reply:extra});
@@ -649,13 +655,13 @@ function csAnswerQ(qi,ci){
   const q=csState.cfg.qs[qi],c=q.choices[ci],btns=box.querySelectorAll('.choice-btn');
   csState.tries[qi]=(csState.tries[qi]||0)+1;const first=csState.tries[qi]===1;
   if(c.ok){
-    if(first)recordStat(csState.cfg.statKey,true);
+    if(first){recordStat(csState.cfg.statKey,true);csState.ftCorrect++;csState.ftTotal++;}
     btns.forEach((b,i)=>{if(q.choices[i].ok){b.classList.add('correct');if(!b.querySelector('.choice-comment')){const cm=document.createElement('div');cm.className='choice-comment';cm.textContent='✓ せいかい！';b.appendChild(cm);}}b.disabled=true;});
     btns[ci].classList.add('chosen-outline');
     document.querySelector('.cs-reply[data-qi="'+qi+'"]').innerHTML='<div class="sensei-reply" style="margin-top:8px"><div class="sr-body">🎉 '+rubyize(q.a)+'</div></div>';
     csState.answered[qi]=true;celebrate();
   }else{
-    if(first){recordStat(csState.cfg.statKey,false);markReview(csState.cfg.statKey,csState.cfg.setIdx);}
+    if(first){recordStat(csState.cfg.statKey,false);markReview(csState.cfg.statKey,csState.cfg.setIdx);csState.ftTotal++;}
     btns[ci].classList.add('wrong');btns[ci].disabled=true;
     if(csState.tries[qi]>=2){
       btns.forEach((b,i)=>{if(q.choices[i].ok){b.classList.add('correct');if(!b.querySelector('.choice-comment')){const cm=document.createElement('div');cm.className='choice-comment';cm.textContent='✓ こたえはこれ';b.appendChild(cm);}}b.disabled=true;});
@@ -673,13 +679,13 @@ function csAnswerFinal(ci){
   const fin=csState.cfg.fin,c=fin.choices[ci],btns=box.querySelectorAll('.choice-btn');
   csState.finTries=(csState.finTries||0)+1;const first=csState.finTries===1;
   const reveal=function(){btns.forEach((b,i)=>{if(fin.choices[i].ok){b.classList.add('correct');if(!b.querySelector('.choice-comment')){const cm=document.createElement('div');cm.className='choice-comment';cm.textContent='✓ なるほど！';b.appendChild(cm);}}b.disabled=true;});document.getElementById('csFinReply').innerHTML='<div class="sensei-reply"><div class="sr-head">'+fin.head+'</div><div class="sr-body">'+rubyize(fin.a)+'</div></div>';csState.fin=true;};
-  if(c.ok){if(first)recordStat(csState.cfg.statKey,true);btns[ci].classList.add('chosen-outline');reveal();celebrate();}
-  else{if(first){recordStat(csState.cfg.statKey,false);markReview(csState.cfg.statKey,csState.cfg.setIdx);}btns[ci].classList.add('wrong');btns[ci].disabled=true;
+  if(c.ok){if(first){recordStat(csState.cfg.statKey,true);csState.ftCorrect++;csState.ftTotal++;}btns[ci].classList.add('chosen-outline');reveal();celebrate();}
+  else{if(first){recordStat(csState.cfg.statKey,false);markReview(csState.cfg.statKey,csState.cfg.setIdx);csState.ftTotal++;}btns[ci].classList.add('wrong');btns[ci].disabled=true;
     if(csState.finTries>=2){reveal();}else{document.getElementById('csFinReply').innerHTML='<div class="cs-retry">もう一度、いちばん近いものを考えてみよう！</div>';}}
   csGate();
 }
 function renderChoiceSet(cfg){
-  csState={cfg:cfg,answered:{},fin:false,tries:{},finTries:0};
+  csState={cfg:cfg,answered:{},fin:false,tries:{},finTries:0,ftCorrect:0,ftTotal:0};
   const qsHtml=cfg.qs.map((q,qi)=>'<div class="q-item" style="margin-top:14px"><div class="qq">'+cfg.qIcon+'（'+(qi+1)+'）'+rubyize(q.q)+'</div><div class="cs-choices" data-qi="'+qi+'"></div><div class="cs-reply" data-qi="'+qi+'"></div></div>').join('');
   document.getElementById('screenInner').innerHTML=
    '<div class="screen show" style="position:static;display:flex;">'+
@@ -693,7 +699,7 @@ function renderChoiceSet(cfg){
    '</div>';
   cfg.qs.forEach((q,qi)=>{const box=document.querySelector('.cs-choices[data-qi="'+qi+'"]');q.choices.forEach((c,ci)=>{const b=document.createElement('button');b.className='choice-btn';b.innerHTML='<div class="choice-row"><span class="choice-mark">'+'ABC'[ci]+'</span><span class="choice-text">'+rubyize(c.t)+'</span></div>';b.addEventListener('click',()=>csAnswerQ(qi,ci));box.appendChild(b);});});
   const fb=document.getElementById('csFinChoices');cfg.fin.choices.forEach((c,ci)=>{const b=document.createElement('button');b.className='choice-btn';b.innerHTML='<div class="choice-row"><span class="choice-mark">'+'ABC'[ci]+'</span><span class="choice-text">'+rubyize(c.t)+'</span></div>';b.addEventListener('click',()=>csAnswerFinal(ci));fb.appendChild(b);});
-  document.getElementById('csDone').addEventListener('click',()=>{finishActivity(cfg.id);});
+  document.getElementById('csDone').addEventListener('click',()=>{logAttempt(cfg.statKey,cfg.hs,csState.ftCorrect,csState.ftTotal);finishActivity(cfg.id);});
 }
 function srTable(rows){return '<table class="sr-table"><tbody>'+rows.map(r=>'<tr><th>'+rubyize(r.l)+'</th><td>'+rubyize(r.v)+'</td></tr>').join('')+'</tbody></table>';}
 function renderShiryo(){
@@ -745,13 +751,13 @@ function kokuAnswer(qi,ci){
   const q=kokuState.item.qs[qi],c=q.choices[ci],btns=box.querySelectorAll('.choice-btn');
   kokuState.tries[qi]=(kokuState.tries[qi]||0)+1;const first=kokuState.tries[qi]===1;
   if(c.ok){
-    if(first)recordKokugo(true);
+    if(first){recordKokugo(true);kokuState.ftCorrect++;kokuState.ftTotal++;}
     btns.forEach((b,i)=>{if(q.choices[i].ok){b.classList.add('correct');if(!b.querySelector('.choice-comment')){const cm=document.createElement('div');cm.className='choice-comment';cm.textContent='✓ せいかい！';b.appendChild(cm);}}b.disabled=true;});
     btns[ci].classList.add('chosen-outline');
     document.querySelector('.kq-reply[data-qi="'+qi+'"]').innerHTML='<div class="sensei-reply" style="margin-top:8px"><div class="sr-body">🎉 '+rubyize(q.a)+'</div></div>';
     kokuState.answered[qi]=true;celebrate();
   }else{
-    if(first){recordKokugo(false);markReview('kokugo',kokuState.setIdx);}
+    if(first){recordKokugo(false);markReview('kokugo',kokuState.setIdx);kokuState.ftTotal++;}
     btns[ci].classList.add('wrong');btns[ci].disabled=true;
     if(kokuState.tries[qi]>=2){
       btns.forEach((b,i)=>{if(q.choices[i].ok){b.classList.add('correct');if(!b.querySelector('.choice-comment')){const cm=document.createElement('div');cm.className='choice-comment';cm.textContent='✓ こたえはこれ';b.appendChild(cm);}}b.disabled=true;});
@@ -765,7 +771,7 @@ function kokuAnswer(qi,ci){
 }
 function renderKokugo(picked){
   if(!picked){closeScreen();return;}
-  const item=picked.item;kokuState={item:item,answered:{},wrote:false,tries:{},setIdx:picked.idx};
+  const item=picked.item;kokuState={item:item,answered:{},wrote:false,tries:{},setIdx:picked.idx,ftCorrect:0,ftTotal:0};
   const qsHtml=item.qs.map((q,qi)=>'<div class="q-item" style="margin-top:14px"><div class="qq">📝（'+(qi+1)+'）'+rubyize(q.q)+'</div><div class="kq-choices" data-qi="'+qi+'"></div><div class="kq-reply" data-qi="'+qi+'"></div></div>').join('');
   const tmplH=item.write.tmpl?('<div class="tmpl-box">'+rubyize(item.write.tmpl)+'</div>'):'';
   document.getElementById('screenInner').innerHTML=`
@@ -796,6 +802,7 @@ function renderKokugo(picked){
   document.getElementById('kokuDone').addEventListener('click',()=>{
     const ans=document.getElementById('kokuWrite').value.trim();
     addLog('国語（読む・書く）',item.title+'：'+stripRuby(item.write.q),ans,'見本：'+(item.write.ex&&item.write.ex[0]?stripRuby(item.write.ex[0]):''));
+    logAttempt('kokugo',item.title,kokuState.ftCorrect,kokuState.ftTotal);
     finishActivity('kokugo');
   });
 }
@@ -1370,7 +1377,7 @@ document.getElementById('resetBtn').addEventListener('click',()=>{
 });
 document.getElementById('resetAllBtn').addEventListener('click',()=>{
   if(confirm('すべての記録（連勝・カレンダー・先生メモ・計算レベル・ポイント・交換のきろく）を消します。元にもどせません。よろしいですか？')){
-    state={today:todayKey(),checks:{},history:{},calcTier:1,calcStats:{correct:0,wrong:0},sakubunDone:0,log:[],money:0,points:0,totalEarned:0,badges:[],weakQuiz:{},settings:{sound:true,bigText:false},exchanges:[],cards:{},gachaLog:{},review:{},seen:{read:[],write:[],sci:[]},recent:{read:[],write:[],sci:[]},stats:{calc:{},sci:{},read:{},write:{},quiz:{}},weak:{calc:[],sci:[]}};
+    state={today:todayKey(),checks:{},history:{},calcTier:1,calcStats:{correct:0,wrong:0},sakubunDone:0,log:[],money:0,points:0,totalEarned:0,badges:[],weakQuiz:{},settings:{sound:true,bigText:false},exchanges:[],cards:{},gachaLog:{},review:{},attempts:[],seen:{read:[],write:[],sci:[]},recent:{read:[],write:[],sci:[]},stats:{calc:{},sci:{},read:{},write:{},quiz:{}},weak:{calc:[],sci:[]}};
     store.del('kudan-state-v5');renderQuests();renderTop();alert('初期化しました');
   }
 });
