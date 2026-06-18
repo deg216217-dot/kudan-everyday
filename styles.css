@@ -363,3 +363,15 @@ body.big-ui .sec-sub{font-size:13.5px;}
 .sr-table th,.sr-table td{border:1px solid #d8e0ea;padding:7px 10px;text-align:left;}
 .sr-table th{background:#eef4ff;color:#1c2c44;font-weight:700;}
 .sr-table td{background:#fff;color:#33414f;font-weight:600;}
+/* もう一度ヒント */
+.cs-retry{margin-top:8px;color:#c9760a;font-weight:700;font-size:13px;background:#fff6e6;border:1px solid #f0d9a8;border-radius:9px;padding:8px 11px;}
+/* 教科べつ正答率カード */
+.subj-grid{display:flex;flex-wrap:wrap;margin:10px -4px 0;}
+.subj-card{flex:1 1 calc(50% - 8px);box-sizing:border-box;margin:4px;border-radius:12px;padding:11px 8px;text-align:center;border:1px solid #e2e8f0;background:#fff;}
+.subj-l{font-size:12px;color:#33414f;font-weight:700;}
+.subj-p{font-size:25px;font-weight:800;margin:4px 0 2px;line-height:1;}
+.subj-n{font-size:11px;color:#7c8a9e;}
+.subj-good{background:#eafaf0;border-color:#b7e6c8;}.subj-good .subj-p{color:#1e7a44;}
+.subj-mid{background:#fff7e8;border-color:#f0d9a8;}.subj-mid .subj-p{color:#c9760a;}
+.subj-low{background:#fdeeee;border-color:#f2c4c4;}.subj-low .subj-p{color:#cc4444;}
+.subj-none{background:#f6f8fb;}.subj-none .subj-p{color:#aab4c0;}
