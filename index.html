@@ -36,6 +36,7 @@
       <div class="gt" id="gachaT">⚾ あと 5 つでガチャ！</div>
       <div class="gs" id="gachaS">5つぜんぶクリアすると、ポイントガチャが回せる！</div>
     </div>
+    <div class="bonusbar" id="bonusBar" onclick="goHakken()">🔎 <b>はっけん</b>で ボーナスpt！ ことば・ミッション・はっけんで <b>＋10pt</b> ずつ ▶</div>
     <button class="reset" id="resetBtn">今日のチェックをリセット（保護者用）</button>
   </div>
 
@@ -115,7 +116,7 @@
     <button class="reset" id="resetAllBtn">全データを初期化（保護者用）</button>
   </div>
   <div class="panel" id="panel-hakken">
-    <div class="board"><div class="board-top"><div><div class="title">🔎 はっけん</div><div class="date">読む・知る・やってみる</div></div></div></div>
+    <div class="board"><div class="board-top"><div><div class="title">🔎 はっけん</div><div class="date">やるほど ＋10pt ボーナス！</div></div></div></div>
     <div class="sec-title">📖 ことばと話題の窓</div>
     <div class="sec-sub">毎日ひとつ、新しい言葉や話題に出会おう。「未知との遭遇」が読む力・考える力を広げます。</div>
     <div id="madoBox"></div>
@@ -125,7 +126,7 @@
     <div class="sec-title" style="margin-top:24px">💡 今日のはっけん</div>
     <div class="sec-sub">今日はじめて知ったこと・ふしぎに思ったことを書こう。知らないことを受け入れて言葉にする練習です。</div>
     <textarea id="hakkenInput" class="answer-area" placeholder="れい：わたり鳥は星を見て方角がわかるらしい。すごい！"></textarea>
-    <button class="btn btn-green btn-sm" id="hakkenSave" style="margin-top:8px;width:auto">💡 きろくする</button>
+    <button class="btn btn-green btn-sm" id="hakkenSave" style="margin-top:8px;width:auto">💡 きろくする (+10pt)</button>
     <div id="hakkenMsg" class="sec-sub" style="min-height:16px;margin-top:6px"></div>
     <div id="hakkenList"></div>
   </div>

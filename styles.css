@@ -404,3 +404,6 @@ body.big-ui .sec-sub{font-size:13.5px;}
 .hk-row{background:#fff;border:1px solid #e2e8f0;border-radius:9px;padding:8px 11px;margin-top:7px;font-size:13px;color:#33414f;line-height:1.6;display:flex;justify-content:space-between;}
 .hk-date{font-size:10.5px;color:#aab4c0;flex:none;margin-left:8px;}
 .tabbar .tab{font-size:10px;}
+/* はっけんボーナス案内 */
+.bonusbar{background:linear-gradient(90deg,#fff3d6,#ffe7c2);border:1px solid #f0d28a;border-radius:12px;padding:11px 13px;margin-top:10px;font-size:12.5px;font-weight:700;color:#9a5a00;text-align:center;cursor:pointer;line-height:1.5;}
+.bonusbar b{color:#c9760a;}
