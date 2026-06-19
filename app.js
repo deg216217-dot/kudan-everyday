@@ -113,14 +113,14 @@ const store={mem:{},
 };
 
 let state={today:todayKey(),checks:{},history:{},calcTier:1,calcStats:{correct:0,wrong:0},sakubunDone:0,log:[],
-  money:0,points:0,totalEarned:0,badges:[],weakQuiz:{},settings:{sound:true,bigText:false},exchanges:[],cards:{},gachaLog:{},review:{},attempts:[],dailyQuiz:{},quizWins:0,quizRecent:[],seen:{read:[],write:[],sci:[]},recent:{read:[],write:[],sci:[]},stats:{calc:{},sci:{},read:{},write:{},quiz:{}},weak:{calc:[],sci:[]}};
+  money:0,points:0,totalEarned:0,badges:[],weakQuiz:{},settings:{sound:true,bigText:false},exchanges:[],cards:{},gachaLog:{},review:{},attempts:[],dailyQuiz:{},quizWins:0,quizRecent:[],mado:{},madoSeen:0,madoRecent:[],missionWk:{},missionRecent:[],hakkenCount:0,seen:{read:[],write:[],sci:[]},recent:{read:[],write:[],sci:[]},stats:{calc:{},sci:{},read:{},write:{},quiz:{}},weak:{calc:[],sci:[]}};
 
 function load(){
   const r=store.get('kudan-state-v5');
   if(r){try{const s=JSON.parse(r);
     state.history=s.history||{};state.calcTier=s.calcTier||1;
     state.calcStats=s.calcStats||{correct:0,wrong:0};state.sakubunDone=s.sakubunDone||0;state.log=s.log||[];
-    state.money=s.money||0;state.points=s.points||0;state.exchanges=Array.isArray(s.exchanges)?s.exchanges:[];state.cards=s.cards||{};state.gachaLog=s.gachaLog||{};state.review=(s.review&&typeof s.review==='object')?s.review:{};state.attempts=Array.isArray(s.attempts)?s.attempts:[];state.dailyQuiz=(s.dailyQuiz&&typeof s.dailyQuiz==='object')?s.dailyQuiz:{};state.quizWins=s.quizWins||0;state.quizRecent=Array.isArray(s.quizRecent)?s.quizRecent:[];
+    state.money=s.money||0;state.points=s.points||0;state.exchanges=Array.isArray(s.exchanges)?s.exchanges:[];state.cards=s.cards||{};state.gachaLog=s.gachaLog||{};state.review=(s.review&&typeof s.review==='object')?s.review:{};state.attempts=Array.isArray(s.attempts)?s.attempts:[];state.dailyQuiz=(s.dailyQuiz&&typeof s.dailyQuiz==='object')?s.dailyQuiz:{};state.quizWins=s.quizWins||0;state.quizRecent=Array.isArray(s.quizRecent)?s.quizRecent:[];state.mado=(s.mado&&typeof s.mado==='object')?s.mado:{};state.madoSeen=s.madoSeen||0;state.madoRecent=Array.isArray(s.madoRecent)?s.madoRecent:[];state.missionWk=(s.missionWk&&typeof s.missionWk==='object')?s.missionWk:{};state.missionRecent=Array.isArray(s.missionRecent)?s.missionRecent:[];state.hakkenCount=s.hakkenCount||0;
     state.totalEarned=s.totalEarned||0;state.badges=Array.isArray(s.badges)?s.badges:[];state.weakQuiz=(s.weakQuiz&&typeof s.weakQuiz==='object')?s.weakQuiz:{};
     state.settings=(s.settings&&typeof s.settings==='object')?{sound:s.settings.sound!==false,bigText:!!s.settings.bigText}:{sound:true,bigText:false};
     state.seen=s.seen||{read:[],write:[],sci:[]};
@@ -1052,6 +1052,70 @@ function recordQuiz(id,ok){
 }
 
 // ===== ポイント =====
+function hkEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function weekKey(){return Math.floor(Date.now()/(7*24*60*60*1000));}
+function pickMado(){
+  const pool=(typeof MADO!=='undefined')?MADO:[];if(!pool.length)return null;
+  if(state.mado&&state.mado.date===state.today&&pool[state.mado.idx])return state.mado;
+  state.madoRecent=Array.isArray(state.madoRecent)?state.madoRecent:[];
+  let cand=[];for(let i=0;i<pool.length;i++)if(state.madoRecent.indexOf(i)<0)cand.push(i);
+  if(!cand.length)cand=pool.map(function(_,i){return i;});
+  const idx=cand[Math.floor(Math.random()*cand.length)];
+  state.madoRecent.push(idx);while(state.madoRecent.length>15)state.madoRecent.shift();
+  state.mado={date:state.today,idx:idx,seen:false};save();return state.mado;
+}
+function pickMission(){
+  const pool=(typeof MISSIONS!=='undefined')?MISSIONS:[];if(!pool.length)return null;
+  const wk=weekKey();
+  if(state.missionWk&&state.missionWk.week===wk&&pool[state.missionWk.idx])return state.missionWk;
+  state.missionRecent=Array.isArray(state.missionRecent)?state.missionRecent:[];
+  let cand=[];for(let i=0;i<pool.length;i++)if(state.missionRecent.indexOf(i)<0)cand.push(i);
+  if(!cand.length)cand=pool.map(function(_,i){return i;});
+  const idx=cand[Math.floor(Math.random()*cand.length)];
+  state.missionRecent.push(idx);while(state.missionRecent.length>6)state.missionRecent.shift();
+  state.missionWk={week:wk,idx:idx};save();return state.missionWk;
+}
+function renderMado(){
+  const box=document.getElementById('madoBox');if(!box)return;
+  const pool=(typeof MADO!=='undefined')?MADO:[];const m=pickMado();if(!m||!pool[m.idx]){box.innerHTML='';return;}
+  const it=pool[m.idx];const seen=state.mado&&state.mado.seen;
+  let inner;
+  if(it.k==='word'){inner='<div class="mado-tag">あたらしい ことば</div><div class="mado-word">'+it.w+'<span class="mado-yomi">（'+it.yomi+'）</span></div><div class="mado-body">'+rubyize(it.mean)+'</div><div class="mado-ex">れい：'+rubyize(it.ex)+'</div>';}
+  else{inner='<div class="mado-tag">きょうの話題</div><div class="mado-title">'+rubyize(it.t)+'</div><div class="mado-body">'+rubyize(it.body)+'</div>'+(it.think?'<div class="mado-think">🤔 '+rubyize(it.think)+'</div>':'');}
+  box.innerHTML='<div class="mado-card">'+inner+'<button class="btn btn-ghost btn-sm" id="madoSeen" style="margin-top:11px;width:auto"'+(seen?' disabled':'')+'>'+(seen?'✓ よんだ！（これまで '+(state.madoSeen||0)+'）':'🔖 よんだ！')+'</button></div>';
+  const b=document.getElementById('madoSeen');
+  if(b&&!seen)b.addEventListener('click',function(){state.mado.seen=true;state.madoSeen=(state.madoSeen||0)+1;save();if(typeof celebrate==='function')celebrate();renderMado();});
+}
+function renderMission(){
+  const box=document.getElementById('missionBox');if(!box)return;
+  const pool=(typeof MISSIONS!=='undefined')?MISSIONS:[];const mw=pickMission();if(!mw||!pool[mw.idx]){box.innerHTML='';return;}
+  const it=pool[mw.idx];
+  box.innerHTML='<div class="mission-card"><div class="mission-m">🧭 '+rubyize(it.m)+'</div><div class="mission-hint">ヒント：'+rubyize(it.hint)+'</div><textarea id="missionInput" class="answer-area" placeholder="やってみて、気づいたこと・わかったことを書こう"></textarea><button class="btn btn-green btn-sm" id="missionSave" style="margin-top:8px;width:auto">✅ やったよ！記録する</button><div id="missionMsg" class="sec-sub" style="min-height:16px;margin-top:6px"></div></div>';
+  document.getElementById('missionSave').addEventListener('click',function(){
+    const v=document.getElementById('missionInput').value.trim();
+    if(v.length<2){document.getElementById('missionMsg').textContent='かんたんでOK。やったことを書いてね。';return;}
+    addLog('やってみよう',stripRuby(it.m),v,'');
+    document.getElementById('missionInput').value='';
+    document.getElementById('missionMsg').textContent='記録したよ！「メモ」タブにのこります。よくがんばったね⚾';
+    if(typeof celebrate==='function')celebrate();
+  });
+}
+function renderHakkenList(){
+  const box=document.getElementById('hakkenList');if(!box)return;
+  const items=(state.log||[]).filter(function(l){return l.tag==='はっけん';}).slice(0,5);
+  box.innerHTML=items.length?('<div class="sec-sub" style="margin-top:14px">さいきんのはっけん</div>'+items.map(function(l){return '<div class="hk-row"><span>💡 '+hkEsc(l.answer)+'</span><span class="hk-date">'+l.date+'</span></div>';}).join('')):'';
+}
+function renderHakken(){
+  renderMado();renderMission();renderHakkenList();
+  const sv=document.getElementById('hakkenSave');
+  if(sv&&!sv.dataset.wired){sv.dataset.wired='1';sv.addEventListener('click',function(){
+    const ta=document.getElementById('hakkenInput');const v=ta.value.trim();
+    if(v.length<2){document.getElementById('hakkenMsg').textContent='ひとことでOK。今日知ったこと・ふしぎを書いてね。';return;}
+    addLog('はっけん','今日のはっけん',v,'');state.hakkenCount=(state.hakkenCount||0)+1;save();
+    ta.value='';document.getElementById('hakkenMsg').textContent='きろくしたよ！その「気づく力」が合格する子の力⚾';
+    if(typeof celebrate==='function')celebrate();renderHakkenList();
+  });}
+}
 function renderZukan(){
   const pts=state.points||0;
   document.getElementById('ptNow').textContent=pts;
@@ -1373,6 +1437,7 @@ document.querySelectorAll('.tab').forEach(t=>{
     if(t.dataset.tab==='record')renderRecord();
     if(t.dataset.tab==='parent')renderParent();
     if(t.dataset.tab==='plan'){renderBackup();renderSettings();}
+    if(t.dataset.tab==='hakken')renderHakken();
   });
 });
 
@@ -1410,7 +1475,7 @@ document.getElementById('resetBtn').addEventListener('click',()=>{
 });
 document.getElementById('resetAllBtn').addEventListener('click',()=>{
   if(confirm('すべての記録（連勝・カレンダー・先生メモ・計算レベル・ポイント・交換のきろく）を消します。元にもどせません。よろしいですか？')){
-    state={today:todayKey(),checks:{},history:{},calcTier:1,calcStats:{correct:0,wrong:0},sakubunDone:0,log:[],money:0,points:0,totalEarned:0,badges:[],weakQuiz:{},settings:{sound:true,bigText:false},exchanges:[],cards:{},gachaLog:{},review:{},attempts:[],dailyQuiz:{},quizWins:0,quizRecent:[],seen:{read:[],write:[],sci:[]},recent:{read:[],write:[],sci:[]},stats:{calc:{},sci:{},read:{},write:{},quiz:{}},weak:{calc:[],sci:[]}};
+    state={today:todayKey(),checks:{},history:{},calcTier:1,calcStats:{correct:0,wrong:0},sakubunDone:0,log:[],money:0,points:0,totalEarned:0,badges:[],weakQuiz:{},settings:{sound:true,bigText:false},exchanges:[],cards:{},gachaLog:{},review:{},attempts:[],dailyQuiz:{},quizWins:0,quizRecent:[],mado:{},madoSeen:0,madoRecent:[],missionWk:{},missionRecent:[],hakkenCount:0,seen:{read:[],write:[],sci:[]},recent:{read:[],write:[],sci:[]},stats:{calc:{},sci:{},read:{},write:{},quiz:{}},weak:{calc:[],sci:[]}};
     store.del('kudan-state-v5');renderQuests();renderTop();alert('初期化しました');
   }
 });

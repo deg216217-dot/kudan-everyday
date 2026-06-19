@@ -114,6 +114,21 @@
     </div>
     <button class="reset" id="resetAllBtn">全データを初期化（保護者用）</button>
   </div>
+  <div class="panel" id="panel-hakken">
+    <div class="board"><div class="board-top"><div><div class="title">🔎 はっけん</div><div class="date">読む・知る・やってみる</div></div></div></div>
+    <div class="sec-title">📖 ことばと話題の窓</div>
+    <div class="sec-sub">毎日ひとつ、新しい言葉や話題に出会おう。「未知との遭遇」が読む力・考える力を広げます。</div>
+    <div id="madoBox"></div>
+    <div class="sec-title" style="margin-top:24px">🧭 やってみようミッション（今週）</div>
+    <div class="sec-sub">アプリの外で、実際にやってみよう。「座学」だけでない「経験」が強みになります。</div>
+    <div id="missionBox"></div>
+    <div class="sec-title" style="margin-top:24px">💡 今日のはっけん</div>
+    <div class="sec-sub">今日はじめて知ったこと・ふしぎに思ったことを書こう。知らないことを受け入れて言葉にする練習です。</div>
+    <textarea id="hakkenInput" class="answer-area" placeholder="れい：わたり鳥は星を見て方角がわかるらしい。すごい！"></textarea>
+    <button class="btn btn-green btn-sm" id="hakkenSave" style="margin-top:8px;width:auto">💡 きろくする</button>
+    <div id="hakkenMsg" class="sec-sub" style="min-height:16px;margin-top:6px"></div>
+    <div id="hakkenList"></div>
+  </div>
 </div>
 
 <div class="tabbar">
@@ -122,6 +137,7 @@
   <div class="tab" data-tab="record"><span class="ti">📅</span>きろく</div>
   <div class="tab" data-tab="parent"><span class="ti">📝</span>メモ</div>
   <div class="tab" data-tab="plan"><span class="ti">🗺️</span>さくせん</div>
+  <div class="tab" data-tab="hakken"><span class="ti">🔎</span>はっけん</div>
 </div>
 
 <div class="screen" id="screen"><div id="screenInner"></div></div>
@@ -136,6 +152,7 @@
 <script src="content/shiryo.js"></script>
 <script src="content/sansu.js"></script>
 <script src="content/rika.js"></script>
+<script src="content/hakken.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
