@@ -113,14 +113,14 @@ const store={mem:{},
 };
 
 let state={today:todayKey(),checks:{},history:{},calcTier:1,calcStats:{correct:0,wrong:0},sakubunDone:0,log:[],
-  money:0,points:0,totalEarned:0,badges:[],weakQuiz:{},settings:{sound:true,bigText:false},exchanges:[],cards:{},gachaLog:{},review:{},attempts:[],seen:{read:[],write:[],sci:[]},recent:{read:[],write:[],sci:[]},stats:{calc:{},sci:{},read:{},write:{},quiz:{}},weak:{calc:[],sci:[]}};
+  money:0,points:0,totalEarned:0,badges:[],weakQuiz:{},settings:{sound:true,bigText:false},exchanges:[],cards:{},gachaLog:{},review:{},attempts:[],dailyQuiz:{},quizWins:0,quizRecent:[],seen:{read:[],write:[],sci:[]},recent:{read:[],write:[],sci:[]},stats:{calc:{},sci:{},read:{},write:{},quiz:{}},weak:{calc:[],sci:[]}};
 
 function load(){
   const r=store.get('kudan-state-v5');
   if(r){try{const s=JSON.parse(r);
     state.history=s.history||{};state.calcTier=s.calcTier||1;
     state.calcStats=s.calcStats||{correct:0,wrong:0};state.sakubunDone=s.sakubunDone||0;state.log=s.log||[];
-    state.money=s.money||0;state.points=s.points||0;state.exchanges=Array.isArray(s.exchanges)?s.exchanges:[];state.cards=s.cards||{};state.gachaLog=s.gachaLog||{};state.review=(s.review&&typeof s.review==='object')?s.review:{};state.attempts=Array.isArray(s.attempts)?s.attempts:[];
+    state.money=s.money||0;state.points=s.points||0;state.exchanges=Array.isArray(s.exchanges)?s.exchanges:[];state.cards=s.cards||{};state.gachaLog=s.gachaLog||{};state.review=(s.review&&typeof s.review==='object')?s.review:{};state.attempts=Array.isArray(s.attempts)?s.attempts:[];state.dailyQuiz=(s.dailyQuiz&&typeof s.dailyQuiz==='object')?s.dailyQuiz:{};state.quizWins=s.quizWins||0;state.quizRecent=Array.isArray(s.quizRecent)?s.quizRecent:[];
     state.totalEarned=s.totalEarned||0;state.badges=Array.isArray(s.badges)?s.badges:[];state.weakQuiz=(s.weakQuiz&&typeof s.weakQuiz==='object')?s.weakQuiz:{};
     state.settings=(s.settings&&typeof s.settings==='object')?{sound:s.settings.sound!==false,bigText:!!s.settings.bigText}:{sound:true,bigText:false};
     state.seen=s.seen||{read:[],write:[],sci:[]};
@@ -271,6 +271,38 @@ function pickFromPool(cat){
 }
 
 // ============ RENDER TODAY ============
+function warmupPool(){let p=[];['q_kenmin','q_kanji','q_kotowaza','q_units','q_news'].forEach(function(k){const q=QUIZZES[k];if(q&&Array.isArray(q.pool))p=p.concat(q.pool);});return p;}
+function pickDailyQuiz(){
+  const pool=warmupPool();if(!pool.length)return null;
+  if(state.dailyQuiz&&state.dailyQuiz.date===state.today&&pool[state.dailyQuiz.idx])return state.dailyQuiz;
+  state.quizRecent=Array.isArray(state.quizRecent)?state.quizRecent:[];
+  let cand=[];for(let i=0;i<pool.length;i++)if(state.quizRecent.indexOf(i)<0)cand.push(i);
+  if(!cand.length)cand=pool.map(function(_,i){return i;});
+  const idx=cand[Math.floor(Math.random()*cand.length)];
+  state.quizRecent.push(idx);while(state.quizRecent.length>50)state.quizRecent.shift();
+  state.dailyQuiz={date:state.today,idx:idx,done:false,correct:false};save();return state.dailyQuiz;
+}
+function renderTodayQuiz(){
+  const box=document.getElementById('todayQuiz');if(!box)return;
+  const pool=warmupPool();const dq=pickDailyQuiz();
+  if(!dq||!pool[dq.idx]){box.innerHTML='';return;}
+  const it=pool[dq.idx];const wins=state.quizWins||0;
+  const head='<div class="tq-h">📣 今日のクイズ<span class="tq-streak">これまで '+wins+'問せいかい🎉</span></div>';
+  if(dq.done){box.innerHTML='<div class="tq-card tq-done">'+head+'<div class="tq-q">'+rubyize(it.q)+'</div><div class="tq-reply">'+(dq.correct?'🎉 せいかい！ ':'🔍 ')+rubyize(it.a)+'</div><div class="tq-foot">またあした！⚾</div></div>';return;}
+  const ch=it.choices.map(function(c,i){return '<button class="tq-choice" data-i="'+i+'"><span class="choice-mark">'+'ABC'[i]+'</span><span>'+rubyize(c.t)+'</span></button>';}).join('');
+  box.innerHTML='<div class="tq-card">'+head+'<div class="tq-sub">クエストの前に、1問ウォームアップ！（点数には関係ないよ）</div><div class="tq-q">'+rubyize(it.q)+'</div><div class="tq-choices">'+ch+'</div><div id="tqReply"></div></div>';
+  box.querySelectorAll('.tq-choice').forEach(function(b){b.addEventListener('click',function(){answerTodayQuiz(parseInt(b.dataset.i,10));});});
+}
+function answerTodayQuiz(ci){
+  const pool=warmupPool();const dq=state.dailyQuiz;if(!dq||dq.done||!pool[dq.idx])return;
+  const it=pool[dq.idx];const ok=!!(it.choices[ci]&&it.choices[ci].ok);
+  document.querySelectorAll('#todayQuiz .tq-choice').forEach(function(b,i){const c=it.choices[i];if(c)b.classList.add(c.ok?'correct':'wrong');if(i===ci&&c&&!c.ok)b.classList.add('chosen');b.disabled=true;});
+  dq.done=true;dq.correct=ok;if(ok)state.quizWins=(state.quizWins||0)+1;
+  if(typeof logAttempt==='function')logAttempt('warmup',String(it.q).replace(/《[^》]*》/g,'').slice(0,28),ok?1:0,1);
+  save();
+  const r=document.getElementById('tqReply');if(r)r.innerHTML='<div class="tq-reply">'+(ok?'🎉 せいかい！ ':'🔍 ')+rubyize(it.a)+'</div>';
+  if(ok&&typeof celebrate==='function')celebrate();
+}
 function renderQuests(){
   const list=document.getElementById('questList');list.innerHTML='';
   todaysQuestIds().forEach(id=>{
@@ -289,6 +321,7 @@ function renderQuests(){
     });
     list.appendChild(el);
   });
+  try{renderTodayQuiz();}catch(e){}
 }
 function renderTop(){
   const done=Object.values(state.checks).filter(Boolean).length;
@@ -1377,7 +1410,7 @@ document.getElementById('resetBtn').addEventListener('click',()=>{
 });
 document.getElementById('resetAllBtn').addEventListener('click',()=>{
   if(confirm('すべての記録（連勝・カレンダー・先生メモ・計算レベル・ポイント・交換のきろく）を消します。元にもどせません。よろしいですか？')){
-    state={today:todayKey(),checks:{},history:{},calcTier:1,calcStats:{correct:0,wrong:0},sakubunDone:0,log:[],money:0,points:0,totalEarned:0,badges:[],weakQuiz:{},settings:{sound:true,bigText:false},exchanges:[],cards:{},gachaLog:{},review:{},attempts:[],seen:{read:[],write:[],sci:[]},recent:{read:[],write:[],sci:[]},stats:{calc:{},sci:{},read:{},write:{},quiz:{}},weak:{calc:[],sci:[]}};
+    state={today:todayKey(),checks:{},history:{},calcTier:1,calcStats:{correct:0,wrong:0},sakubunDone:0,log:[],money:0,points:0,totalEarned:0,badges:[],weakQuiz:{},settings:{sound:true,bigText:false},exchanges:[],cards:{},gachaLog:{},review:{},attempts:[],dailyQuiz:{},quizWins:0,quizRecent:[],seen:{read:[],write:[],sci:[]},recent:{read:[],write:[],sci:[]},stats:{calc:{},sci:{},read:{},write:{},quiz:{}},weak:{calc:[],sci:[]}};
     store.del('kudan-state-v5');renderQuests();renderTop();alert('初期化しました');
   }
 });
