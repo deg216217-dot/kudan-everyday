@@ -816,10 +816,11 @@ function renderKokugo(picked){
       ${qsHtml}
       <div class="q-item" style="margin-top:16px">
         <div class="qq">✍️ ${rubyize(item.write.q)}</div>
-        <div class="q-note">下の「型」を使って、自分のことばで書こう（40〜60字を目あすに。長く書けたら花丸！）。むずかしければ「見本」を見てね。</div>
+        <div class="q-note">下の「型」を使って、自分のことばで書こう（40〜60字を目あすに。長く書けたら花丸！）。むずかしければ「見本」を見てね。文のさいごは「。」、区切りは「、」をつけよう。</div>
         ${tmplH}
         <textarea class="answer-area" id="kokuWrite" placeholder="自分のことばで書こう（必須）"></textarea>
         <div id="kokuCount" class="char-count">いま 0字</div>
+        <div id="kokuPunct" class="punct-hint"></div>
         <button class="btn btn-ghost btn-sm" id="kokuEx" style="margin-top:8px">📑 見本を見る</button>
         <div id="kokuExBox"></div>
       </div>
@@ -831,7 +832,7 @@ function renderKokugo(picked){
     q.choices.forEach((c,ci)=>{const b=document.createElement('button');b.className='choice-btn';b.innerHTML='<div class="choice-row"><span class="choice-mark">'+'ABC'[ci]+'</span><span class="choice-text">'+rubyize(c.t)+'</span></div>';b.addEventListener('click',()=>kokuAnswer(qi,ci));box.appendChild(b);});
   });
   const wt=document.getElementById('kokuWrite');
-  wt.addEventListener('input',()=>{const v=wt.value.trim();const uniq=new Set(v.replace(/\s/g,'')).size;kokuState.wrote=(v.length>=6&&uniq>=3);const cc=document.getElementById('kokuCount');if(cc)cc.textContent='いま '+v.length+'字';kokuGate();});
+  wt.addEventListener('input',()=>{const v=wt.value.trim();const uniq=new Set(v.replace(/\s/g,'')).size;kokuState.wrote=(v.length>=6&&uniq>=3);const cc=document.getElementById('kokuCount');if(cc)cc.textContent='いま '+v.length+'字';const ph=document.getElementById('kokuPunct');if(ph){var h='',ok=false;if(v.length>=8&&!/[。．]/.test(v))h='💬 文のおわりに「。」をつけよう';else if(v.length>=24&&!/[、，]/.test(v))h='💬 長い文は「、」で区切ると読みやすいよ';else if(v.length>=8){h='✓ いいね！読みやすい文だよ';ok=true;}ph.textContent=h;ph.className='punct-hint'+(ok?' ok':'');}kokuGate();});
   document.getElementById('kokuEx').addEventListener('click',()=>{document.getElementById('kokuExBox').innerHTML='<div class="sensei-reply"><div class="sr-head">📑 こんなふうに書けたら花丸！</div><div class="sr-body">'+(item.write.ex||[]).map(e=>rubyize(e)).join('\n\n')+'</div></div>';});
   document.getElementById('kokuDone').addEventListener('click',()=>{
     const ans=document.getElementById('kokuWrite').value.trim();

@@ -417,3 +417,6 @@ body.big-ui .sec-sub{font-size:13.5px;}
 .rv-ok{font-size:11px;color:#1e7a44;font-weight:800;margin-left:6px;}
 .rv-written{background:#eef5ff;border:1px solid #cfe0f5;border-radius:10px;padding:10px 12px;font-size:13.5px;color:#22303f;line-height:1.75;margin-top:6px;white-space:pre-wrap;}
 .rv-wlabel{font-size:11px;color:#3d6db5;font-weight:700;margin-bottom:3px;}
+/* 句読点ナビ */
+.punct-hint{font-size:12px;color:#c9760a;font-weight:700;text-align:right;margin-top:3px;min-height:16px;}
+.punct-hint.ok{color:#1e7a44;}
